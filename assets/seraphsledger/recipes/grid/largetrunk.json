@@ -1,0 +1,10 @@
+{
+	ingredientPattern: "TT",
+	ingredients: {
+		"T": { type: "block", code: "game:trunk-east", attributes: { type: "normal-generic" } }
+	},
+	width: 2,
+	height: 1,
+	shapeless: true,
+	output: { type: "block", code: "seraphsledger:largetrunk-east", attributes: { type: "normal-generic" } }
+}

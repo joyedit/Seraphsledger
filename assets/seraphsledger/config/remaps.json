@@ -1,0 +1,25 @@
+{
+	"seraphsledger:v1.4.0-tesseract-rename": [
+		"/bir remapq seraphsledger:largetrunk-north tesseract:largetrunk-north force",
+		"/bir remapq seraphsledger:largetrunk-east tesseract:largetrunk-east force",
+		"/bir remapq seraphsledger:largetrunk-south tesseract:largetrunk-south force",
+		"/bir remapq seraphsledger:largetrunk-west tesseract:largetrunk-west force",
+
+		"/bir remapq seraphsledger:largechest-north tesseract:largechest-north force",
+		"/bir remapq seraphsledger:largechest-east tesseract:largechest-east force",
+		"/bir remapq seraphsledger:largechest-south tesseract:largechest-south force",
+		"/bir remapq seraphsledger:largechest-west tesseract:largechest-west force",
+
+		"/bir remapq seraphsledger:largelabeledchest-north tesseract:largelabeledchest-north force",
+		"/bir remapq seraphsledger:largelabeledchest-east tesseract:largelabeledchest-east force",
+		"/bir remapq seraphsledger:largelabeledchest-south tesseract:largelabeledchest-south force",
+		"/bir remapq seraphsledger:largelabeledchest-west tesseract:largelabeledchest-west force",
+
+		"/bir remapq seraphsledger:largestoragevessel tesseract:largestoragevessel force",
+
+		"/bir remapq seraphsledger:largebasket-north tesseract:largebasket-north force",
+		"/bir remapq seraphsledger:largebasket-east tesseract:largebasket-east force",
+		"/bir remapq seraphsledger:largebasket-south tesseract:largebasket-south force",
+		"/bir remapq seraphsledger:largebasket-west tesseract:largebasket-west force"
+	]
+}

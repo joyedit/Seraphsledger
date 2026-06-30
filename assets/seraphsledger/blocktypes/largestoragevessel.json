@@ -1,0 +1,80 @@
+{
+	code: "largestoragevessel",
+	class: "BlockGenericTypedContainer",
+	entityclass: "GenericTypedContainer",
+	behaviors: [
+		{ name: "BoatableGenericTypedContainer" },
+		{ name: "Lockable" },
+		{ name: "Container" },
+		{ name: "UnstableFalling" }
+	],
+	entityBehaviors: [{ name: "Animatable" }],
+	shape: { base: "game:block/clay/storagevessel" },
+	textures: {
+		"ceramic": { base: "game:block/clay/hardened/fire" },
+		"top":     { base: "game:block/clay/hardened/fire", overlays: [ "game:block/clay/overlay/vessel-top" ] },
+		"sides":   { base: "game:block/clay/hardened/fire", overlays: [ "game:block/clay/overlay/vessel-sides" ] },
+		"inside":  { base: "game:block/clay/hardened/fire", overlays: [ "game:block/clay/overlay/vessel-inside" ] },
+
+		"normal-ceramic": { base: "game:block/clay/hardened/fire" },
+		"normal-top":     { base: "game:block/clay/hardened/fire", overlays: [ "game:block/clay/overlay/vessel-top" ] },
+		"normal-sides":   { base: "game:block/clay/hardened/fire", overlays: [ "game:block/clay/overlay/vessel-sides" ] },
+		"normal-inside":  { base: "game:block/clay/hardened/fire", overlays: [ "game:block/clay/overlay/vessel-inside" ] }
+	},
+	attributes: {
+		reinforcable: true,
+		humanoidTraversalCost: 100,
+		tempGlowMode: 1,
+		partialAttachable: true,
+		inventoryClassName: "chest",
+		defaultType: "normal",
+		types: ["normal"],
+		drop: { "normal": true },
+		quantitySlots: { "normal": 35 },
+		quantityColumns: { "normal": 7 },
+		dialogTitleLangCode: { "normal": "seraphsledger:largestoragevessel-title" },
+		storageType: { "normal": 32 },
+		retrieveOnly: { "normal": false },
+		spoilSpeedMulByFoodCat: {
+			"normal": {
+				"vegetable": 0.75,
+				"grain": 0.5
+			}
+		},
+		shape: { "normal": "game:block/clay/storagevessel" },
+		openSound: "game:sounds/block/vesselopen",
+		closeSound: "game:sounds/block/vesselclose"
+	},
+	blockmaterial: "Ceramic",
+	creativeinventoryStacks: [
+		{
+			tabs: [ "general", "decorative" ],
+			stacks: [
+				{ type: "block", code: "seraphsledger:largestoragevessel", attributes: { type: "normal" } }
+			]
+		}
+	],
+	replaceable: 1000,
+	resistance: 0.8,
+	maxStackSize: 4,
+	sideAo: { all: false },
+	lightAbsorption: 0,
+	sounds: {
+		walk: "walk/stone",
+		break: "block/ceramicplace",
+		hit: "block/ceramichit",
+		place: "block/ceramicplace"
+	},
+	sideopaque: { all: false },
+	sidesolid: { all: false },
+	collisionSelectionBox: { x1: 0.125, y1: 0, z1: 0.125, x2: 0.875, y2: 1, z2: 0.875 },
+	heldTpIdleAnimation: "holdunderarm",
+	guiTransform: {
+		scale: 1.25
+	},
+	tpHandTransform: {
+		translation: { x: -1, y: -0.5, z: -0.5 },
+		rotation: { x: 25, y: -20, z: -99 },
+		scale: 0.56
+	}
+}

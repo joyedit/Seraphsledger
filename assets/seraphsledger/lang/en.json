@@ -1,0 +1,16 @@
+{
+	"block-normal-generic-largetrunk-*": "Large Trunk",
+	"largetrunk-title": "Large Trunk Contents",
+
+	"block-normal-generic-largechest-*": "Large Chest",
+	"largechest-title": "Large Chest Contents",
+
+	"block-normal-labeled-largelabeledchest-*": "Large Labeled Chest",
+	"largelabeledchest-title": "Large Labeled Chest Contents",
+
+	"block-normal-largestoragevessel": "Large Storage Vessel",
+	"largestoragevessel-title": "Large Storage Vessel Contents",
+
+	"block-reed-largebasket-*": "Large Basket",
+	"largebasket-title": "Large Basket Contents"
+}
