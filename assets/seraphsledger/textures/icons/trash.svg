@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 512 512" width="512" height="512">
+  <g style="fill:none;stroke-width:30;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;">
+    <!-- lid -->
+    <path d="M 70 130 L 442 130"/>
+    <!-- handle -->
+    <path d="M 200 130 L 210 80 L 302 80 L 312 130"/>
+    <!-- can body -->
+    <path d="M 110 160 L 145 442 C 147 458 160 470 176 470 L 336 470 C 352 470 365 458 367 442 L 402 160"/>
+    <!-- slats -->
+    <path d="M 198 205 L 208 415"/>
+    <path d="M 256 205 L 256 415"/>
+    <path d="M 314 205 L 304 415"/>
+  </g>
+</svg>

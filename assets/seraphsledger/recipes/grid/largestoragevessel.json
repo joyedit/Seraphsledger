@@ -1,0 +1,18 @@
+{
+	ingredientPattern: "VV",
+	ingredients: {
+		"V": {
+			type: "block",
+			code: "game:storagevessel-*",
+			name: "color",
+			allowedVariants: [
+				"blue-fired", "fire-fired", "black-fired", "brown-fired", "cream-fired",
+				"earthyorange-fired", "gray-fired", "orange-fired", "red-fired", "tan-fired"
+			]
+		}
+	},
+	width: 2,
+	height: 1,
+	shapeless: true,
+	output: { type: "block", code: "seraphsledger:largestoragevessel", attributes: { type: "normal" } }
+}
