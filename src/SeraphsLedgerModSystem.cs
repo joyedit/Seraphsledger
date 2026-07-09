@@ -38,6 +38,8 @@ namespace SeraphsLedger
         private EnemyDropDespawn enemyDropDespawn;
         private StepCountdown stepCountdown;
         private StepCountdownHud stepCountdownHud;
+        private SecretsPageHud secretsPageHud;
+        private LockboxRegistry lockboxRegistry;
         private GuiDialogFeatureConfig configDialog;
 
         public override void Start(ICoreAPI api)
@@ -46,7 +48,13 @@ namespace SeraphsLedger
             // Registered identically on both sides so the message type ids match.
             api.Network.RegisterChannel(NetworkChannelName)
                 .RegisterMessageType<SortBackpackPacket>()
-                .RegisterMessageType<TrashCursorPacket>();
+                .RegisterMessageType<TrashCursorPacket>()
+                .RegisterMessageType<LockboxListPacket>();
+
+            // The cobblestone-disguised container. Registered unconditionally
+            // (like the large-container blocks) so lockboxes already placed in a
+            // save keep working even while the feature is toggled off.
+            api.RegisterBlockClass("BlockHiddenLockbox", typeof(BlockHiddenLockbox));
         }
 
         // The large-container recipes are plain grid-recipe JSON, auto-loaded by the
@@ -68,7 +76,7 @@ namespace SeraphsLedger
             base.AssetsFinalize(api);
 
             var cfg = SeraphsLedgerConfig.Load(api);
-            if (cfg.LargeContainers) return;
+            if (cfg.LargeContainers && cfg.HiddenLockboxes) return;
 
             var recipes = api.World?.GridRecipes;
             if (recipes == null) return;
@@ -76,12 +84,15 @@ namespace SeraphsLedger
             foreach (var r in recipes)
             {
                 AssetLocation code = r?.Output?.Code;
-                if (code != null
-                    && code.Domain == "seraphsledger"
-                    && code.Path.StartsWith("large", StringComparison.Ordinal))
-                {
-                    r.Enabled = false;
-                }
+                if (code == null || code.Domain != "seraphsledger") continue;
+
+                bool disable =
+                    (!cfg.LargeContainers && code.Path.StartsWith("large", StringComparison.Ordinal))
+                    || (!cfg.HiddenLockboxes
+                        && (code.Path.StartsWith("hiddenlockbox", StringComparison.Ordinal)
+                            || code.Path.StartsWith("secretspage", StringComparison.Ordinal)));
+
+                if (disable) r.Enabled = false;
             }
         }
 
@@ -90,6 +101,10 @@ namespace SeraphsLedger
             base.StartClientSide(api);
             capi = api;
             ClientChannel = api.Network.GetChannel(NetworkChannelName);
+
+            // Keep the handler registered regardless of the toggle so the packet
+            // never goes unhandled; without the HUD the list is simply unused.
+            ClientChannel.SetMessageHandler<LockboxListPacket>(OnLockboxList);
 
             // The settings dialog is always reachable, regardless of which features
             // are on, so the player can turn things back on.
@@ -186,6 +201,27 @@ namespace SeraphsLedger
                 stepCountdownHud = new StepCountdownHud(api);
                 stepCountdownHud.TryOpen();
             }
+
+            // Page of Secrets locator HUD; opens/closes itself depending on what
+            // the player is holding, so it isn't TryOpen'd here.
+            if (cfg.HiddenLockboxes)
+            {
+                secretsPageHud = new SecretsPageHud(api);
+            }
+        }
+
+        private void OnLockboxList(LockboxListPacket packet)
+        {
+            var list = new List<Vintagestory.API.MathTools.BlockPos>();
+            var p = packet?.Positions;
+            if (p != null)
+            {
+                for (int i = 0; i + 2 < p.Length; i += 3)
+                {
+                    list.Add(new Vintagestory.API.MathTools.BlockPos(p[i], p[i + 1], p[i + 2]));
+                }
+            }
+            SecretsPageHud.Positions = list;
         }
 
         private bool ToggleConfigGui()
@@ -206,6 +242,11 @@ namespace SeraphsLedger
             api.Network.GetChannel(NetworkChannelName)
                 .SetMessageHandler<SortBackpackPacket>(OnSortBackpack)
                 .SetMessageHandler<TrashCursorPacket>(OnTrashCursor);
+
+            // Hidden-lockbox ownership tracking. Always on (regardless of the
+            // feature toggle) so placements/removals stay recorded correctly
+            // across toggles; crafting and the HUD are what the switch gates.
+            lockboxRegistry = new LockboxRegistry(api);
 
             var cfg = SeraphsLedgerConfig.Load(api);
 
@@ -258,6 +299,11 @@ namespace SeraphsLedger
             stepCountdownHud?.TryClose();
             stepCountdownHud?.Dispose();
             stepCountdownHud = null;
+            secretsPageHud?.TryClose();
+            secretsPageHud?.Dispose();
+            secretsPageHud = null;
+            lockboxRegistry?.Dispose();
+            lockboxRegistry = null;
             sapi = null;
         }
     }

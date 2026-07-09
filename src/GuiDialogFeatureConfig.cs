@@ -81,6 +81,13 @@ namespace SeraphsLedger
                 },
                 new Feature
                 {
+                    Title = "Hidden lockboxes",
+                    Blurb = "Chisel a lockbox into cobblestone; a Page of Secrets finds them again.",
+                    Get = () => config.HiddenLockboxes,
+                    Set = v => config.HiddenLockboxes = v,
+                },
+                new Feature
+                {
                     Title = "Silenced voices",
                     Blurb = "Mutes the chattering voice sounds of the player and traders.",
                     Get = () => config.SilencedVoices,

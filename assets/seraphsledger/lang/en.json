@@ -12,5 +12,11 @@
 	"largestoragevessel-title": "Large Storage Vessel Contents",
 
 	"block-reed-largebasket-*": "Large Basket",
-	"largebasket-title": "Large Basket Contents"
+	"largebasket-title": "Large Basket Contents",
+
+	"block-normal-generic-hiddenlockbox-*": "Hidden Lockbox",
+	"hiddenlockbox-title": "Hidden Lockbox",
+
+	"item-secretspage": "Page of Secrets",
+	"itemdesc-secretspage": "Hold it to recall where your hidden lockboxes are."
 }
