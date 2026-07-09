@@ -1,0 +1,74 @@
+{
+	code: "hiddenlockbox",
+	class: "BlockHiddenLockbox",
+	entityclass: "GenericTypedContainer",
+	variantgroups: [
+		{ code: "rock", loadFromProperties: "block/rockwithdeposit" }
+	],
+	skipVariants: [ "*-halite", "*-scoria", "*-tuff", "*-travertine" ],
+	attributes: {
+		reinforcable: true,
+		inventoryClassName: "chest",
+		defaultType: "normal-generic",
+		types: ["normal-generic"],
+		rotatatableInterval: { "normal-generic": "22.5degnot45deg" },
+		drop: { "normal-generic": true },
+		quantitySlots: { "normal-generic": 8 },
+		quantityColumns: { "normal-generic": 4 },
+		dialogTitleLangCode: { "normal-generic": "seraphsledger:hiddenlockbox-title" },
+		storageType: { "normal-generic": 189 },
+		retrieveOnly: { "normal-generic": false },
+		rndTexNum: { "normal-generic": 5 },
+		shape: { "normal-generic": "seraphsledger:block/hiddenlockbox" },
+		typedOpenSound: { "normal-generic": "seraphsledger:sounds/block/stoneslide" },
+		typedCloseSound: { "normal-generic": "seraphsledger:sounds/block/stoneslide" },
+		variantByGroupInventory: "rock",
+		handbook: { groupBy: ["hiddenlockbox-*"] }
+	},
+	behaviors: [
+		{ name: "Lockable" },
+		{ name: "Container" }
+	],
+	entityBehaviors: [{ name: "Animatable" }],
+	creativeinventory: { },
+	creativeinventoryStacks: [
+		{
+			tabs: [ "general", "decorative" ],
+			stacks: [
+				{ type: "block", code: "seraphsledger:hiddenlockbox-{rock}", attributes: { type: "normal-generic" } }
+			]
+		}
+	],
+	shape: { base: "seraphsledger:block/hiddenlockbox" },
+	shapeInventory: { base: "seraphsledger:block/hiddenlockbox" },
+	drawtype: "json",
+	textures: {
+		"all": {
+			base: "game:block/stone/cobblestone/{rock}1",
+			alternates: [
+				{ base: "game:block/stone/cobblestone/{rock}2" },
+				{ base: "game:block/stone/cobblestone/{rock}3" },
+				{ base: "game:block/stone/cobblestone/{rock}4" },
+				{ base: "game:block/stone/cobblestone/{rock}5" }
+			]
+		}
+	},
+	blockmaterial: "Stone",
+	replaceable: 140,
+	resistance: 4,
+	lightAbsorption: 99,
+	sideopaque: { all: true },
+	sidesolid: { all: true },
+	sounds: {
+		walk: "game:walk/stone",
+		byTool: {
+			"Pickaxe": { hit: "game:block/rock-hit-pickaxe", break: "game:block/rock-break-pickaxe" }
+		}
+	},
+	heldTpIdleAnimation: "holdbothhandslarge", heldRightReadyAnimation: "heldblockready", heldTpUseAnimation: "twohandplaceblock",
+	tpHandTransform: {
+		translation: { x: -1.23, y: -0.91, z: -0.8 },
+		rotation: { x: -2, y: 25, z: -78 },
+		scale: 0.4
+	}
+}

@@ -32,6 +32,11 @@ namespace SeraphsLedger
         public bool LargeContainers = true;
         public bool SilencedVoices = true;
 
+        // Hidden lockboxes disguised as cobblestone plus the Page of Secrets that
+        // locates them. Gated like LargeContainers: recipes are disabled when off
+        // (placed lockboxes keep working), and the client locator HUD isn't built.
+        public bool HiddenLockboxes = true;
+
         // Distance-challenge mode is off by default - it's an opt-in challenge run,
         // not a tweak everyone wants. StartMeters seeds a player's budget the first
         // time the feature ever sees them, so they aren't instantly frozen.

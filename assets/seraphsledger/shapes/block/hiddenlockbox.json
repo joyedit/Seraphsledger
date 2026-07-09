@@ -1,0 +1,83 @@
+{
+	"textureWidth": 16,
+	"textureHeight": 16,
+	"elements": [
+		{
+			"name": "Body",
+			"from": [ 0, 0, 0 ],
+			"to": [ 16, 16, 15 ],
+			"faces": {
+				"north": { "texture": "#all", "uv": [ 0, 0, 16, 16 ] },
+				"east":  { "texture": "#all", "uv": [ 1, 0, 16, 16 ] },
+				"west":  { "texture": "#all", "uv": [ 0, 0, 15, 16 ] },
+				"up":    { "texture": "#all", "uv": [ 0, 0, 16, 15 ] },
+				"down":  { "texture": "#all", "uv": [ 0, 1, 16, 16 ] }
+			}
+		},
+		{
+			"name": "FrameW",
+			"from": [ 0, 0, 15 ],
+			"to": [ 5, 16, 16 ],
+			"faces": {
+				"south": { "texture": "#all", "uv": [ 0, 0, 5, 16 ] },
+				"west":  { "texture": "#all", "uv": [ 15, 0, 16, 16 ] },
+				"up":    { "texture": "#all", "uv": [ 0, 15, 5, 16 ] },
+				"down":  { "texture": "#all", "uv": [ 0, 0, 5, 1 ] }
+			}
+		},
+		{
+			"name": "FrameE",
+			"from": [ 11, 0, 15 ],
+			"to": [ 16, 16, 16 ],
+			"faces": {
+				"south": { "texture": "#all", "uv": [ 11, 0, 16, 16 ] },
+				"east":  { "texture": "#all", "uv": [ 0, 0, 1, 16 ] },
+				"up":    { "texture": "#all", "uv": [ 11, 15, 16, 16 ] },
+				"down":  { "texture": "#all", "uv": [ 11, 0, 16, 1 ] }
+			}
+		},
+		{
+			"name": "FrameB",
+			"from": [ 5, 0, 15 ],
+			"to": [ 11, 5, 16 ],
+			"faces": {
+				"south": { "texture": "#all", "uv": [ 5, 11, 11, 16 ] },
+				"down":  { "texture": "#all", "uv": [ 5, 0, 11, 1 ] }
+			}
+		},
+		{
+			"name": "FrameT",
+			"from": [ 5, 11, 15 ],
+			"to": [ 11, 16, 16 ],
+			"faces": {
+				"south": { "texture": "#all", "uv": [ 5, 0, 11, 5 ] },
+				"up":    { "texture": "#all", "uv": [ 5, 15, 11, 16 ] }
+			}
+		},
+		{
+			"name": "Drawer",
+			"from": [ 5, 5, 11 ],
+			"to": [ 11, 11, 16 ],
+			"faces": {
+				"south": { "texture": "#all", "uv": [ 5, 5, 11, 11 ] },
+				"up":    { "texture": "#all", "uv": [ 5, 10, 11, 15 ] },
+				"down":  { "texture": "#all", "uv": [ 5, 1, 11, 6 ] },
+				"east":  { "texture": "#all", "uv": [ 1, 5, 6, 11 ] },
+				"west":  { "texture": "#all", "uv": [ 10, 5, 15, 11 ] }
+			}
+		}
+	],
+	"animations": [
+		{
+			"code": "lidopen",
+			"name": "lidopen",
+			"quantityframes": 16,
+			"onActivityStopped": "Rewind",
+			"onAnimationEnd": "Hold",
+			"keyframes": [
+				{ "frame": 0, "elements": { "Drawer": { "offsetZ": 0.0 } } },
+				{ "frame": 15, "elements": { "Drawer": { "offsetZ": 3.5 } } }
+			]
+		}
+	]
+}

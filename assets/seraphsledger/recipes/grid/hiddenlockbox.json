@@ -1,0 +1,12 @@
+{
+	ingredientPattern: "H,C,S",
+	ingredients: {
+		"H": { type: "item", tags: ["tool-hammer"], isTool: true, toolDurabilityCost: 10 },
+		"C": { type: "item", tags: ["tool-chisel"], isTool: true, toolDurabilityCost: 10 },
+		"S": { type: "block", code: "game:cobblestone-*", name: "rock" }
+	},
+	width: 1,
+	height: 3,
+	shapeless: false,
+	output: { type: "block", code: "seraphsledger:hiddenlockbox-{rock}", attributes: { type: "normal-generic" } }
+}
