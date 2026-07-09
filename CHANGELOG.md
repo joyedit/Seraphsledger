@@ -2,6 +2,17 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.8.1
+
+### Fixed
+- **Large Chest** can now be crafted. Its recipe was two normal chests (shapeless,
+  2×1), which is identical to vanilla's "2 chests → Trunk" recipe, so the grid always
+  resolved to a Trunk instead. The recipe now requires two chests plus a metal nail
+  strip (`CNC`), making it unambiguous. Large Trunk and Large Labeled Chest were
+  unaffected because their inputs don't collide with any vanilla recipe. Note: only
+  chests carrying the `normal-generic` type attribute (crafted, or broken and picked
+  up) qualify — very old chests from earlier mod versions may lack it and won't craft.
+
 ## 1.8.0
 
 ### Added

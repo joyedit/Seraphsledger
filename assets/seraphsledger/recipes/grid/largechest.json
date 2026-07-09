@@ -1,9 +1,10 @@
 {
-	ingredientPattern: "CC",
+	ingredientPattern: "CNC",
 	ingredients: {
-		"C": { type: "block", code: "game:chest-east", attributes: { type: "normal-generic" } }
+		"C": { type: "block", code: "game:chest-east", attributes: { type: "normal-generic" } },
+		"N": { type: "item", code: "game:metalnailsandstrips-*" }
 	},
-	width: 2,
+	width: 3,
 	height: 1,
 	shapeless: true,
 	output: { type: "block", code: "seraphsledger:largechest-east", attributes: { type: "normal-generic" } }
