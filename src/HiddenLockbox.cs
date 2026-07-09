@@ -106,27 +106,44 @@ namespace SeraphsLedger
         [ProtoMember(1)] public List<LockboxSaveEntry> Entries = new List<LockboxSaveEntry>();
     }
 
-    // Tracks who placed each hidden lockbox, persisted in the savegame, and
-    // syncs each owner's list to their client so the Page of Secrets HUD can
-    // point at them. Always active server-side (even with the feature toggled
-    // off) so the data stays correct across toggles; only crafting and the
-    // client HUD are gated by the config switch.
+    // Tracks who placed each hidden lockbox, persisted in the savegame. Always
+    // active server-side (even with the feature toggled off) so the data stays
+    // correct across toggles; only crafting and the label sync are gated.
+    //
+    // Reveal model: the server watches each player's active hotbar slot. While
+    // a player holds a Page of Secrets, they get sent the positions of the
+    // PAGE OWNER's lockboxes (not necessarily their own - stolen pages work)
+    // that lie within SyncRangeBlocks of them, re-checked about once a second.
+    // The client renders those as floating labels. Distant stashes are never
+    // sent over the wire, so a modified client can't dump someone's whole
+    // stash network - it only ever learns about boxes it is already near.
     public class LockboxRegistry
     {
         internal static LockboxRegistry Instance;
 
         private const string DataKey = "seraphsledger-lockboxes";
+        private const int CheckIntervalMs = 900;
+        public const double SyncRangeBlocks = 30;
 
         private readonly ICoreServerAPI sapi;
         private LockboxSaveData data = new LockboxSaveData();
+        private long listenerId;
 
-        public LockboxRegistry(ICoreServerAPI sapi)
+        // Last packet content sent per player uid, so unchanged lists aren't resent.
+        private readonly Dictionary<string, string> lastSentByPlayer = new Dictionary<string, string>();
+
+        public LockboxRegistry(ICoreServerAPI sapi, bool syncEnabled)
         {
             this.sapi = sapi;
             Instance = this;
             sapi.Event.SaveGameLoaded += OnLoad;
             sapi.Event.GameWorldSave += OnSave;
-            sapi.Event.PlayerJoin += p => SyncTo(p);
+            sapi.Event.PlayerDisconnect += p => lastSentByPlayer.Remove(p.PlayerUID);
+
+            if (syncEnabled)
+            {
+                listenerId = sapi.Event.RegisterGameTickListener(OnCheckHolders, CheckIntervalMs);
+            }
         }
 
         private void OnLoad()
@@ -154,46 +171,69 @@ namespace SeraphsLedger
             if (ownerUid == null || pos == null) return;
             data.Entries.RemoveAll(e => e.X == pos.X && e.Y == pos.Y && e.Z == pos.Z);
             data.Entries.Add(new LockboxSaveEntry { OwnerUid = ownerUid, X = pos.X, Y = pos.Y, Z = pos.Z });
-            SyncOwner(ownerUid);
         }
 
         public void Unregister(BlockPos pos)
         {
             if (pos == null) return;
-            string owner = null;
-            data.Entries.RemoveAll(e =>
-            {
-                bool match = e.X == pos.X && e.Y == pos.Y && e.Z == pos.Z;
-                if (match) owner = e.OwnerUid;
-                return match;
-            });
-            if (owner != null) SyncOwner(owner);
+            data.Entries.RemoveAll(e => e.X == pos.X && e.Y == pos.Y && e.Z == pos.Z);
         }
 
-        private void SyncOwner(string ownerUid)
+        // The once-a-second reveal check for every online player.
+        private void OnCheckHolders(float dt)
         {
-            if (sapi.World.PlayerByUid(ownerUid) is IServerPlayer player)
-            {
-                SyncTo(player);
-            }
-        }
+            var channel = sapi.Network.GetChannel(SeraphsLedgerModSystem.NetworkChannelName);
 
-        public void SyncTo(IServerPlayer player)
-        {
-            var packed = new List<int>();
-            foreach (var e in data.Entries)
+            foreach (IPlayer p in sapi.World.AllOnlinePlayers)
             {
-                if (e.OwnerUid != player.PlayerUID) continue;
-                packed.Add(e.X);
-                packed.Add(e.Y);
-                packed.Add(e.Z);
+                if (!(p is IServerPlayer player)) continue;
+                if (player.ConnectionState != EnumClientState.Playing) continue;
+
+                var packed = new List<int>();
+                ItemSlot slot = player.InventoryManager?.ActiveHotbarSlot;
+                ItemStack stack = slot?.Itemstack;
+
+                if (stack?.Collectible is ItemSecretsPage)
+                {
+                    string ownerUid = ItemSecretsPage.OwnerUid(stack);
+
+                    // Pages from before the seal existed bind to whoever holds
+                    // them first.
+                    if (ownerUid == null)
+                    {
+                        ItemSecretsPage.Bind(stack, player);
+                        slot.MarkDirty();
+                        ownerUid = player.PlayerUID;
+                    }
+
+                    var plrPos = player.Entity.Pos;
+                    double rangeSq = SyncRangeBlocks * SyncRangeBlocks;
+                    foreach (var e in data.Entries)
+                    {
+                        if (e.OwnerUid != ownerUid) continue;
+                        double dx = e.X + 0.5 - plrPos.X;
+                        double dy = e.Y + 0.5 - plrPos.Y;
+                        double dz = e.Z + 0.5 - plrPos.Z;
+                        if (dx * dx + dy * dy + dz * dz > rangeSq) continue;
+                        packed.Add(e.X);
+                        packed.Add(e.Y);
+                        packed.Add(e.Z);
+                    }
+                }
+
+                // Only send when the visible set actually changed (covers the
+                // "stopped holding the page" case with an empty list).
+                string signature = string.Join(",", packed);
+                if (lastSentByPlayer.TryGetValue(player.PlayerUID, out string prev) && prev == signature) continue;
+                lastSentByPlayer[player.PlayerUID] = signature;
+
+                channel.SendPacket(new LockboxListPacket { Positions = packed.ToArray() }, player);
             }
-            sapi.Network.GetChannel(SeraphsLedgerModSystem.NetworkChannelName)
-                .SendPacket(new LockboxListPacket { Positions = packed.ToArray() }, player);
         }
 
         public void Dispose()
         {
+            if (listenerId != 0) sapi.Event.UnregisterGameTickListener(listenerId);
             Instance = null;
         }
     }
