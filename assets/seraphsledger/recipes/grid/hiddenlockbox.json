@@ -3,7 +3,7 @@
 	ingredients: {
 		"H": { type: "item", tags: ["tool-hammer"], isTool: true, toolDurabilityCost: 10 },
 		"C": { type: "item", tags: ["tool-chisel"], isTool: true, toolDurabilityCost: 10 },
-		"S": { type: "block", code: "game:cobblestone-*", name: "rock" }
+		"S": { type: "block", code: "game:cobblestone-*", name: "rock", allowedVariants: ["andesite", "chalk", "chert", "conglomerate", "limestone", "claystone", "granite", "sandstone", "shale", "basalt", "peridotite", "phyllite", "slate", "obsidian", "kimberlite", "bauxite", "suevite", "whitemarble", "redmarble", "greenmarble"] }
 	},
 	width: 1,
 	height: 3,

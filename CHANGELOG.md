@@ -2,6 +2,19 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.9.2
+
+### Fixed
+- **Page of Secrets** could not be crafted. The ink and quill was marked as a
+  tool ingredient (`isTool`), but the crafting matcher requires a tool to have
+  enough durability to pay the tool cost — and ink and quill has no durability
+  at all, so the recipe never matched. It is now a non-consumed ingredient
+  (`consume: false`): the ink and quill still survives crafting, unchanged.
+- **Hidden Lockbox** recipe logged "Output hiddenlockbox-coral cannot be
+  resolved" on load when another mod adds extra cobblestone variants. The
+  cobblestone ingredient is now pinned to the 20 vanilla rock types the lockbox
+  actually exists for.
+
 ## 1.9.1
 
 ### Fixed
