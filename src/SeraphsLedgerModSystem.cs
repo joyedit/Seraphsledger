@@ -38,7 +38,7 @@ namespace SeraphsLedger
         private EnemyDropDespawn enemyDropDespawn;
         private StepCountdown stepCountdown;
         private StepCountdownHud stepCountdownHud;
-        private SecretsPageHud secretsPageHud;
+        private LockboxLabelRenderer lockboxLabels;
         private LockboxRegistry lockboxRegistry;
         private GuiDialogFeatureConfig configDialog;
 
@@ -55,6 +55,7 @@ namespace SeraphsLedger
             // (like the large-container blocks) so lockboxes already placed in a
             // save keep working even while the feature is toggled off.
             api.RegisterBlockClass("BlockHiddenLockbox", typeof(BlockHiddenLockbox));
+            api.RegisterItemClass("ItemSecretsPage", typeof(ItemSecretsPage));
         }
 
         // The large-container recipes are plain grid-recipe JSON, auto-loaded by the
@@ -202,26 +203,31 @@ namespace SeraphsLedger
                 stepCountdownHud.TryOpen();
             }
 
-            // Page of Secrets locator HUD; opens/closes itself depending on what
-            // the player is holding, so it isn't TryOpen'd here.
+            // Floating labels over hidden lockboxes while a Page of Secrets is
+            // held. The server decides what this client may see (page owner's
+            // boxes within range); we just render whatever arrives.
             if (cfg.HiddenLockboxes)
             {
-                secretsPageHud = new SecretsPageHud(api);
+                lockboxLabels = new LockboxLabelRenderer(api);
+                api.Event.RegisterRenderer(lockboxLabels, EnumRenderStage.Ortho, "seraphsledgerlockboxlabels");
             }
         }
 
         private void OnLockboxList(LockboxListPacket packet)
         {
-            var list = new List<Vintagestory.API.MathTools.BlockPos>();
+            if (lockboxLabels == null) return;
+
+            var labels = new List<LockboxLabel>();
             var p = packet?.Positions;
             if (p != null)
             {
+                string text = Lang.Get("seraphsledger:hiddenlockbox-title");
                 for (int i = 0; i + 2 < p.Length; i += 3)
                 {
-                    list.Add(new Vintagestory.API.MathTools.BlockPos(p[i], p[i + 1], p[i + 2]));
+                    labels.Add(new LockboxLabel { X = p[i], Y = p[i + 1], Z = p[i + 2], Text = text });
                 }
             }
-            SecretsPageHud.Positions = list;
+            lockboxLabels.SetLabels(labels);
         }
 
         private bool ToggleConfigGui()
@@ -243,12 +249,12 @@ namespace SeraphsLedger
                 .SetMessageHandler<SortBackpackPacket>(OnSortBackpack)
                 .SetMessageHandler<TrashCursorPacket>(OnTrashCursor);
 
+            var cfg = SeraphsLedgerConfig.Load(api);
+
             // Hidden-lockbox ownership tracking. Always on (regardless of the
             // feature toggle) so placements/removals stay recorded correctly
-            // across toggles; crafting and the HUD are what the switch gates.
-            lockboxRegistry = new LockboxRegistry(api);
-
-            var cfg = SeraphsLedgerConfig.Load(api);
+            // across toggles; the switch gates crafting and the label sync.
+            lockboxRegistry = new LockboxRegistry(api, cfg.HiddenLockboxes);
 
             // Hostile creatures vanish 2s after death, dropping their harvest loot.
             if (cfg.EnemyFastDespawn)
@@ -291,7 +297,6 @@ namespace SeraphsLedger
             harmony = null;
             ClientChannel = null;
             configDialog = null;
-            capi = null;
             enemyDropDespawn?.Dispose();
             enemyDropDespawn = null;
             stepCountdown?.Dispose();
@@ -299,11 +304,15 @@ namespace SeraphsLedger
             stepCountdownHud?.TryClose();
             stepCountdownHud?.Dispose();
             stepCountdownHud = null;
-            secretsPageHud?.TryClose();
-            secretsPageHud?.Dispose();
-            secretsPageHud = null;
+            if (lockboxLabels != null)
+            {
+                capi?.Event.UnregisterRenderer(lockboxLabels, EnumRenderStage.Ortho);
+                lockboxLabels.Dispose();
+                lockboxLabels = null;
+            }
             lockboxRegistry?.Dispose();
             lockboxRegistry = null;
+            capi = null;
             sapi = null;
         }
     }

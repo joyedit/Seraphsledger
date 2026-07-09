@@ -82,7 +82,7 @@ namespace SeraphsLedger
                 new Feature
                 {
                     Title = "Hidden lockboxes",
-                    Blurb = "Chisel a lockbox into cobblestone; a Page of Secrets finds them again.",
+                    Blurb = "Chisel a lockbox into cobblestone; holding a Page of Secrets reveals them.",
                     Get = () => config.HiddenLockboxes,
                     Set = v => config.HiddenLockboxes = v,
                 },

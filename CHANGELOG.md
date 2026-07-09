@@ -2,6 +2,32 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.10.0
+
+### Changed
+- **Page of Secrets reworked into a stealable treasure map.** Each page is
+  sealed to its crafter (shown in the item name/tooltip, e.g. "Feyd's Page of
+  Secrets"), and whoever *holds* it sees that player's hidden lockboxes —
+  steal someone's page and their stashes are yours to find. Pages are live
+  keys to the owner's stash registry, so lockboxes placed after the page was
+  written show up too. Pages crafted before 1.10.0 seal to the first player
+  who holds them.
+- **Floating labels replace the locator HUD.** While a page is held, a
+  "Hidden Lockbox" label floats over each of the owner's lockboxes, visible
+  through walls, fading out toward 30 blocks (same rendering approach as
+  Quartermaster's container labels). The block-highlight and the HUD list are
+  gone.
+- **Server-authoritative reveal.** The server checks about once a second what
+  each player is holding and only sends lockbox positions of the page's owner
+  within 30 blocks of that player. Distant stashes never cross the wire, so
+  modified clients can't dump a stash network, and there is no world scanning
+  involved — just a distance filter over the registry.
+
+### Fixed
+- **Page of Secrets icon** was a stretched block of text (a texture meant for
+  UV-mapping, not an icon). It's now a proper parchment sheet stamped with a
+  small red wax seal, fitting the sealed-to-its-owner mechanic.
+
 ## 1.9.2
 
 ### Fixed
