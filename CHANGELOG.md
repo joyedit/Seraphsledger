@@ -2,6 +2,23 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.11.0
+
+### Added
+- **Stone-press combinations.** A lockbox's face is divided into four unmarked
+  "stones" (quadrants). The owner, sneak-clicking with their own sealed Page of
+  Secrets in hand, presses four stones in sequence to program the box — a
+  stone-slide sound and a chat note confirm it. From then on the box only opens
+  after sneak-clicking those four stones in order with an empty hand. Every
+  press gives the same soft click and pinch of dust whether right or wrong, so
+  a failed guess is indistinguishable from prodding dead stone; attempts use a
+  sliding window (just keep pressing) and expire after 15 seconds. Combinations
+  live only on the server (never sent to clients), are saved with the world,
+  and are removed by breaking the box — break and re-place to clear one.
+  A thief with a stolen page can *find* the box but cannot reprogram it: only
+  the box's owner can set its combination. Boxes without a combination keep
+  opening on a plain sneak-click.
+
 ## 1.10.1
 
 ### Added

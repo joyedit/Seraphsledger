@@ -4,7 +4,7 @@
   "name": "The Seraph's Ledger",
   "authors": ["Feyd"],
   "description": "A personal bundle of small Vintage Story tweaks: a trader ledger that records every trader you visit with map waypoints and an in-game browser, large storage containers (trunk, chest, labeled chest, storage vessel, basket), hidden lockboxes chiseled into cobblestone with a Page of Secrets to find them again, ctrl+left-click to move all items between open inventories, Sort/Trash buttons in the player inventory, auto-focused creative inventory search, hostile creatures that vanish 2s after death and drop their loot automatically, and silenced character voice sounds (player and traders), and a distance-challenge mode. An in-game settings panel (Ctrl+Shift+L) toggles every feature.",
-  "version": "1.10.1",
+  "version": "1.11.0",
   "iconPath": "modicon.png",
   "dependencies": {
     "game": ""
