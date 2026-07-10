@@ -55,6 +55,7 @@ namespace SeraphsLedger
             // (like the large-container blocks) so lockboxes already placed in a
             // save keep working even while the feature is toggled off.
             api.RegisterBlockClass("BlockHiddenLockbox", typeof(BlockHiddenLockbox));
+            api.RegisterBlockEntityClass("SeraphsLedgerHiddenLockbox", typeof(BlockEntityHiddenLockbox));
             api.RegisterItemClass("ItemSecretsPage", typeof(ItemSecretsPage));
         }
 

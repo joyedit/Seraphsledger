@@ -2,6 +2,16 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.10.1
+
+### Added
+- **Open lockboxes look open.** The drawer's sides are now dark basalt instead
+  of matching cobblestone, so a slid-out drawer reads as a stone plug pulled
+  from a shadowed cavity (the dark faces are fully hidden while closed, so the
+  disguise is unchanged). Opening one also puffs a burst of stone dust from the
+  drawer mouth, colored to match the rock — spawned server-side, so nearby
+  players can spot someone operating a wall stash.
+
 ## 1.10.0
 
 ### Changed
