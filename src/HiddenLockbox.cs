@@ -38,13 +38,60 @@ namespace SeraphsLedger
         {
             if (byPlayer?.Entity?.Controls?.ShiftKey != true) return false;
 
+            // The client can't know combinations (they never leave the server),
+            // so it just mirrors the base bookkeeping; the inventory only opens
+            // when the server says so.
+            if (world.Side == EnumAppSide.Client)
+            {
+                return base.OnBlockInteractStart(world, byPlayer, blockSel);
+            }
+
+            var reg = LockboxRegistry.Instance;
+            int quadrant = QuadrantFromHit(blockSel);
+            ItemStack held = byPlayer.InventoryManager?.ActiveHotbarSlot?.Itemstack;
+
+            // Owner sneak-clicking with their sealed page in hand: each click
+            // presses one of the four stones; four presses program the box's
+            // combination. A stolen page grants no programming rights (and the
+            // silent swallow is indistinguishable from clicking dead stone).
+            if (held?.Collectible is ItemSecretsPage && reg != null)
+            {
+                if (reg.OwnerAt(blockSel.Position) == byPlayer.PlayerUID)
+                {
+                    PressFeedback(world, blockSel);
+                    if (reg.RecordSetPress(byPlayer, blockSel.Position, quadrant))
+                    {
+                        world.PlaySoundAt(new AssetLocation("seraphsledger:sounds/block/stoneslide"),
+                            blockSel.Position.X + 0.5, blockSel.Position.Y + 0.5, blockSel.Position.Z + 0.5,
+                            null, true, 16f, 0.8f);
+                        (byPlayer as IServerPlayer)?.SendMessage(GlobalConstants.GeneralChatGroup,
+                            "Combination set — this lockbox now opens only to those four stone presses. Break and re-place it to remove the combination.",
+                            EnumChatType.Notification);
+                    }
+                }
+                return true;
+            }
+
+            // A programmed box swallows presses until the last four match.
+            // Every press looks and sounds identical - a wrong sequence is
+            // indistinguishable from prodding dead stone.
+            int[] combo = reg?.ComboAt(blockSel.Position);
+            if (combo != null)
+            {
+                PressFeedback(world, blockSel);
+                if (!reg.RecordEnterPress(byPlayer, blockSel.Position, quadrant, combo))
+                {
+                    return true;
+                }
+            }
+
             bool handled = base.OnBlockInteractStart(world, byPlayer, blockSel);
 
-            // A puff of stone dust at the drawer mouth when it's operated. The
+            // A puff of stone dust at the drawer mouth when it opens. The
             // BlockPos overload samples particle colors from this block, so the
             // chips match the rock. Spawned server-side so bystanders see it too
             // - operating a wall stash is observable, which suits the gameplay.
-            if (handled && world.Side == EnumAppSide.Server)
+            if (handled)
             {
                 float angle = (world.BlockAccessor.GetBlockEntity(blockSel.Position)
                     as BlockEntityGenericTypedContainer)?.MeshAngle ?? 0f;
@@ -55,6 +102,33 @@ namespace SeraphsLedger
                 world.SpawnCubeParticles(blockSel.Position, mouth, 0.3f, 20, 0.5f);
             }
             return handled;
+        }
+
+        // Which of the four "stones" (face quadrants) was clicked, from the
+        // exact hit coordinates. Works on any face at any mesh rotation; all
+        // that matters is that the same physical spot always maps to the same
+        // stone. 0/1 = top-left/right, 2/3 = bottom-left/right.
+        private static int QuadrantFromHit(BlockSelection blockSel)
+        {
+            var hit = blockSel.HitPosition;
+            double u, v;
+            switch (blockSel.Face.Axis)
+            {
+                case EnumAxis.X: u = hit.Z; v = hit.Y; break;
+                case EnumAxis.Z: u = hit.X; v = hit.Y; break;
+                default: u = hit.X; v = hit.Z; break;
+            }
+            return (v >= 0.5 ? 0 : 2) + (u >= 0.5 ? 1 : 0);
+        }
+
+        // A soft stone click and a pinch of dust at the exact spot pressed.
+        private static void PressFeedback(IWorldAccessor world, BlockSelection blockSel)
+        {
+            var pos = blockSel.Position;
+            var at = new Vec3d(pos.X + blockSel.HitPosition.X, pos.Y + blockSel.HitPosition.Y, pos.Z + blockSel.HitPosition.Z);
+            world.SpawnCubeParticles(pos, at, 0.15f, 5, 0.35f);
+            world.PlaySoundAt(new AssetLocation("game:sounds/block/loosestone"),
+                at.X, at.Y, at.Z, null, true, 12f, 0.6f);
         }
 
         public override bool DoPlaceBlock(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ItemStack byItemStack)
@@ -175,6 +249,10 @@ namespace SeraphsLedger
         [ProtoMember(2)] public int X;
         [ProtoMember(3)] public int Y;
         [ProtoMember(4)] public int Z;
+
+        // Optional stone-press combination (quadrant ids 0-3); null/empty means
+        // the box opens freely. Server-side only - never sent to clients.
+        [ProtoMember(5)] public int[] Combo;
     }
 
     [ProtoContract]
@@ -254,6 +332,87 @@ namespace SeraphsLedger
         {
             if (pos == null) return;
             data.Entries.RemoveAll(e => e.X == pos.X && e.Y == pos.Y && e.Z == pos.Z);
+        }
+
+        // ---- Stone-press combinations ----------------------------------------
+
+        public const int ComboLength = 4;
+        private const int PressTimeoutMs = 15000;
+
+        private class PressState
+        {
+            public BlockPos Pos;
+            public List<int> Presses = new List<int>();
+            public long LastMs;
+        }
+
+        // Partial press sequences per player, kept separately for programming
+        // (page in hand) and unlocking (empty hand). Server memory only; a
+        // sequence expires after a pause or when the player moves to another box.
+        private readonly Dictionary<string, PressState> setPresses = new Dictionary<string, PressState>();
+        private readonly Dictionary<string, PressState> enterPresses = new Dictionary<string, PressState>();
+
+        private LockboxSaveEntry EntryAt(BlockPos pos)
+        {
+            foreach (var e in data.Entries)
+            {
+                if (e.X == pos.X && e.Y == pos.Y && e.Z == pos.Z) return e;
+            }
+            return null;
+        }
+
+        public string OwnerAt(BlockPos pos) => EntryAt(pos)?.OwnerUid;
+
+        public int[] ComboAt(BlockPos pos)
+        {
+            int[] combo = EntryAt(pos)?.Combo;
+            return combo != null && combo.Length > 0 ? combo : null;
+        }
+
+        private PressState GetState(Dictionary<string, PressState> states, IPlayer player, BlockPos pos)
+        {
+            long now = sapi.World.ElapsedMilliseconds;
+            if (!states.TryGetValue(player.PlayerUID, out var st)
+                || st.Pos.X != pos.X || st.Pos.Y != pos.Y || st.Pos.Z != pos.Z
+                || now - st.LastMs > PressTimeoutMs)
+            {
+                st = new PressState { Pos = pos.Copy() };
+                states[player.PlayerUID] = st;
+            }
+            st.LastMs = now;
+            return st;
+        }
+
+        // Records a programming press (owner, page in hand). Returns true when
+        // the sequence is complete and has been saved as the box's combination.
+        public bool RecordSetPress(IPlayer player, BlockPos pos, int quadrant)
+        {
+            var st = GetState(setPresses, player, pos);
+            st.Presses.Add(quadrant);
+            if (st.Presses.Count < ComboLength) return false;
+
+            var entry = EntryAt(pos);
+            if (entry != null) entry.Combo = st.Presses.ToArray();
+            setPresses.Remove(player.PlayerUID);
+            return true;
+        }
+
+        // Records an unlocking press. The last ComboLength presses form a
+        // sliding window, so a wrong attempt needs no reset - just keep
+        // pressing. Returns true when the window matches the combination.
+        public bool RecordEnterPress(IPlayer player, BlockPos pos, int quadrant, int[] combo)
+        {
+            var st = GetState(enterPresses, player, pos);
+            st.Presses.Add(quadrant);
+            while (st.Presses.Count > combo.Length) st.Presses.RemoveAt(0);
+            if (st.Presses.Count < combo.Length) return false;
+
+            for (int i = 0; i < combo.Length; i++)
+            {
+                if (st.Presses[i] != combo[i]) return false;
+            }
+            enterPresses.Remove(player.PlayerUID);
+            return true;
         }
 
         // The once-a-second reveal check for every online player.
