@@ -2,6 +2,22 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.12.0
+
+### Changed
+- **Hidden lockboxes and the Page of Secrets moved out** into the standalone
+  **Hollowstone** mod (feature-identical to 1.11.0). Seraph's Ledger no longer
+  contains the blocks, items, recipes, or the settings toggle.
+
+### Migration
+- Install **Hollowstone** together with this update, **before the first world
+  load** — Hollowstone ships a remap config that converts already-placed
+  `seraphsledger:hiddenlockbox-*` blocks and `seraphsledger:secretspage` items
+  to its own domain, and the remap only applies cleanly when it's present on
+  that first load. Hollowstone also adopts the lockbox registry (owners and
+  stone-press combinations) from the old savegame data automatically. Page
+  seals (owner attributes) survive the item remap.
+
 ## 1.11.0
 
 ### Added
