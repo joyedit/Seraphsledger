@@ -12,13 +12,5 @@
 	"largestoragevessel-title": "Large Storage Vessel Contents",
 
 	"block-reed-largebasket-*": "Large Basket",
-	"largebasket-title": "Large Basket Contents",
-
-	"block-normal-generic-hiddenlockbox-*": "Hidden Lockbox",
-	"hiddenlockbox-title": "Hidden Lockbox",
-
-	"item-secretspage": "Page of Secrets",
-	"itemdesc-secretspage": "While held, floating markers reveal the owner's hidden lockboxes within 30 blocks — whoever holds the page, sees them.",
-	"secretspage-owned": "{0}'s Page of Secrets",
-	"secretspage-sealedby": "Sealed by {0}. Reveals their hidden lockboxes to whoever holds it."
+	"largebasket-title": "Large Basket Contents"
 }
