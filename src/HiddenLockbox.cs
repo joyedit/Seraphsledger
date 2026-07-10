@@ -37,7 +37,24 @@ namespace SeraphsLedger
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
             if (byPlayer?.Entity?.Controls?.ShiftKey != true) return false;
-            return base.OnBlockInteractStart(world, byPlayer, blockSel);
+
+            bool handled = base.OnBlockInteractStart(world, byPlayer, blockSel);
+
+            // A puff of stone dust at the drawer mouth when it's operated. The
+            // BlockPos overload samples particle colors from this block, so the
+            // chips match the rock. Spawned server-side so bystanders see it too
+            // - operating a wall stash is observable, which suits the gameplay.
+            if (handled && world.Side == EnumAppSide.Server)
+            {
+                float angle = (world.BlockAccessor.GetBlockEntity(blockSel.Position)
+                    as BlockEntityGenericTypedContainer)?.MeshAngle ?? 0f;
+                var mouth = new Vec3d(
+                    blockSel.Position.X + 0.5 + Math.Sin(angle) * 0.55,
+                    blockSel.Position.Y + 0.45,
+                    blockSel.Position.Z + 0.5 + Math.Cos(angle) * 0.55);
+                world.SpawnCubeParticles(blockSel.Position, mouth, 0.3f, 20, 0.5f);
+            }
+            return handled;
         }
 
         public override bool DoPlaceBlock(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ItemStack byItemStack)
@@ -86,6 +103,66 @@ namespace SeraphsLedger
         public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
         {
             return Array.Empty<WorldInteraction>();
+        }
+    }
+
+    // The base container BE tesselates through GenericContainerTextureSource,
+    // which prefixes every shape texture code with the container type
+    // ("normal-generic-inner"). Those prefixed lookups don't resolve for this
+    // mod-domain block (the engine then silently falls back to the "all"
+    // texture - the same failure mode as the 1.9.1 granite bug), which would
+    // paint the drawer's dark cavity faces with cobblestone. This subclass
+    // tesselates and initializes the drawer animator with a PLAIN block
+    // texture source instead, where "#all" and "#inner" resolve directly.
+    public class BlockEntityHiddenLockbox : BlockEntityGenericTypedContainer
+    {
+        private MeshData staticMesh;
+
+        private BlockEntityAnimationUtil AnimUtil => GetBehavior<BEBehaviorAnimatable>()?.animUtil;
+
+        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
+        {
+            var animUtil = AnimUtil;
+
+            if (staticMesh == null && Api is ICoreClientAPI && animUtil?.renderer == null
+                && Block is BlockHiddenLockbox block)
+            {
+                string shapePath = block.Attributes?["shape"][type ?? defaultType].AsString(null);
+                Shape shape = block.GetShape(Api, shapePath);
+                if (shape != null && animUtil != null)
+                {
+                    // Also initializes the drawer ("lidopen") animator; the mesh
+                    // returned is the unrotated shape, rotated per MeshAngle below
+                    // (the animated renderer gets the rotation separately).
+                    var rot = new Vec3f(0, MeshAngle * GameMath.RAD2DEG, 0);
+                    staticMesh = animUtil.InitializeAnimator(
+                        "seraphsledger-lockbox-" + block.Code,
+                        shape,
+                        tesselator.GetTextureSource(block),
+                        rot);
+                }
+            }
+
+            if (staticMesh == null)
+            {
+                // Shape or animator unavailable - degrade to the base rendering
+                // (cobblestone drawer sides, but visible and functional).
+                return base.OnTesselation(mesher, tesselator);
+            }
+
+            // While the drawer animation runs, the Animatable behavior's renderer
+            // draws us; otherwise bake the static mesh into the chunk like any
+            // other block so lighting/AO match the neighbouring cobblestone.
+            bool skipStatic = false;
+            foreach (var bh in Behaviors)
+            {
+                skipStatic |= bh.OnTesselation(mesher, tesselator);
+            }
+            if (!skipStatic)
+            {
+                mesher.AddMeshData(staticMesh.Clone().Rotate(0f, MeshAngle, 0f), 1);
+            }
+            return true;
         }
     }
 

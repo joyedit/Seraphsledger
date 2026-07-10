@@ -1,7 +1,7 @@
 {
 	code: "hiddenlockbox",
 	class: "BlockHiddenLockbox",
-	entityclass: "GenericTypedContainer",
+	entityclass: "SeraphsLedgerHiddenLockbox",
 	variantgroups: [
 		{ code: "rock", loadFromProperties: "block/rockwithdeposit" }
 	],
@@ -43,6 +43,8 @@
 	shapeInventory: { base: "seraphsledger:block/hiddenlockbox" },
 	drawtype: "json",
 	textures: {
+		"inner": { base: "game:block/stone/rock/basalt1" },
+		"innertop": { base: "seraphsledger:block/lockboxcavity" },
 		"all": {
 			base: "game:block/stone/cobblestone/{rock}1",
 			alternates: [
