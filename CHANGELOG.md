@@ -2,6 +2,14 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.12.1 — 2026-07-23
+
+- Compatibility release for Vintage Story 1.22.5. Rebuilt against the 1.22.5
+  assemblies; no code changes.
+- First deployed build since 1.8.1 — see the 1.9.0 through 1.12.0 entries
+  below for what's new, most notably the hidden-lockbox split into the
+  standalone Hollowstone mod (install Hollowstone alongside this update).
+
 ## 1.12.0
 
 ### Changed
