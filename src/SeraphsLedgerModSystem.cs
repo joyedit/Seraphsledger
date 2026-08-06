@@ -7,6 +7,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 
@@ -32,7 +33,9 @@ namespace SeraphsLedger
         internal static IClientNetworkChannel ClientChannel;
 
         private const string HarmonyId = "seraphsledger.ctrlmoveall";
+        private const string IceCellarHarmonyId = "seraphsledger.icecellar";
         private Harmony harmony;
+        private Harmony iceCellarHarmony;
         private ICoreServerAPI sapi;
         private ICoreClientAPI capi;
         private EnemyDropDespawn enemyDropDespawn;
@@ -47,6 +50,47 @@ namespace SeraphsLedger
             api.Network.RegisterChannel(NetworkChannelName)
                 .RegisterMessageType<SortBackpackPacket>()
                 .RegisterMessageType<TrashCursorPacket>();
+
+            // Ice-cooled cellars run on both sides: the server applies the
+            // reduced perish rate to stored food, the client shows it in the
+            // container tooltip. Start() runs for each side (same process in
+            // singleplayer), hence the HasAnyPatches guard.
+            var cfg = SeraphsLedgerConfig.Load(api);
+            if (cfg.IceCooledCellars && !Harmony.HasAnyPatches(IceCellarHarmonyId))
+            {
+                IceCellarPatches.Configure(cfg);
+                iceCellarHarmony = new Harmony(IceCellarHarmonyId);
+
+                // The one method every food container's perish speed (and its
+                // tooltip number) funnels through.
+                iceCellarHarmony.Patch(
+                    AccessTools.Method(typeof(Vintagestory.GameContent.InWorldContainer), "GetPerishRate"),
+                    postfix: new HarmonyMethod(AccessTools.Method(
+                        typeof(IceCellarPatches), nameof(IceCellarPatches.GetPerishRatePostfix))));
+
+                // Make Ice count as a cooling cellar-wall material (vanilla
+                // counts it as non-cooling, so placed ice would otherwise
+                // degrade the room's cellar rating).
+                iceCellarHarmony.Patch(
+                    AccessTools.Method(typeof(Block), nameof(Block.GetRetention),
+                        new[] { typeof(BlockPos), typeof(BlockFacing), typeof(EnumRetentionType) }),
+                    postfix: new HarmonyMethod(AccessTools.Method(
+                        typeof(IceCellarPatches), nameof(IceCellarPatches.GetRetentionPostfix))));
+
+                // Cellar-aware ice melting: slower melt driven by the chilled
+                // room temperature, and no water-source flooding indoors.
+                iceCellarHarmony.Patch(
+                    AccessTools.Method(typeof(Vintagestory.GameContent.BlockLakeIce), "OnServerGameTick"),
+                    prefix: new HarmonyMethod(AccessTools.Method(
+                        typeof(IceCellarPatches), nameof(IceCellarPatches.IceMeltPrefix))));
+
+                // Ice-count line in container tooltips, for discoverability.
+                iceCellarHarmony.Patch(
+                    AccessTools.Method(typeof(Vintagestory.GameContent.BlockEntityContainer),
+                        nameof(Vintagestory.GameContent.BlockEntityContainer.GetBlockInfo)),
+                    postfix: new HarmonyMethod(AccessTools.Method(
+                        typeof(IceCellarPatches), nameof(IceCellarPatches.GetBlockInfoPostfix))));
+            }
         }
 
         // The large-container recipes are plain grid-recipe JSON, auto-loaded by the
@@ -249,6 +293,8 @@ namespace SeraphsLedger
         {
             harmony?.UnpatchAll(HarmonyId);
             harmony = null;
+            iceCellarHarmony?.UnpatchAll(IceCellarHarmonyId);
+            iceCellarHarmony = null;
             ClientChannel = null;
             configDialog = null;
             enemyDropDespawn?.Dispose();

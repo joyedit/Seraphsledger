@@ -8,7 +8,7 @@ namespace SeraphsLedger
     // immediately; because every feature is wired up at load time, a banner makes
     // clear the change only applies after restarting the game.
     //
-    // Opened via the "seraphsledgerconfig" hotkey (Ctrl+Shift+K by default) or the
+    // Opened via the "seraphsledgerconfig" hotkey (Ctrl+Shift+L by default) or the
     // .slconfig chat command, both registered by SeraphsLedgerModSystem.
     public class GuiDialogFeatureConfig : GuiDialog
     {
@@ -85,6 +85,13 @@ namespace SeraphsLedger
                     Blurb = "Mutes the chattering voice sounds of the player and traders.",
                     Get = () => config.SilencedVoices,
                     Set = v => config.SilencedVoices = v,
+                },
+                new Feature
+                {
+                    Title = "Ice-cooled cellars",
+                    Blurb = "Ice blocks chill a cellar (2x food life) and melt slowly, without flooding.",
+                    Get = () => config.IceCooledCellars,
+                    Set = v => config.IceCooledCellars = v,
                 },
                 new Feature
                 {

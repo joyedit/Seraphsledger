@@ -32,6 +32,24 @@ namespace SeraphsLedger
         public bool LargeContainers = true;
         public bool SilencedVoices = true;
 
+        // Ice-cooled cellars: off by default - it changes survival balance
+        // (longer shelf life) rather than just polishing the UI, so players
+        // opt in via the settings dialog. Ice blocks placed in a proper cellar
+        // chill it below the vanilla 5°C floor, slowing food spoilage (about 2x shelf
+        // life at FullBlocks). MinBlocks is where the effect starts, FullBlocks
+        // where it maxes out, Temp the effective temperature at full effect
+        // (clamped to -5..5; below -5 the game's own perish floor applies).
+        // MinMeltChance is the floor on the per-random-tick melt roll for ice
+        // in a cellar (a roll lands on a given block about every ~10 real
+        // minutes), so even a fully iced cellar slowly loses blocks - at the
+        // default about one block per ~17 hours of real play time. 0 makes
+        // fully-chilled cellar ice last forever.
+        public bool IceCooledCellars = false;
+        public int IceCellarMinBlocks = 4;
+        public int IceCellarFullBlocks = 10;
+        public float IceCellarTemp = -3f;
+        public float IceCellarMinMeltChance = 0.01f;
+
         // Distance-challenge mode is off by default - it's an opt-in challenge run,
         // not a tweak everyone wants. StartMeters seeds a player's budget the first
         // time the feature ever sees them, so they aren't instantly frozen.

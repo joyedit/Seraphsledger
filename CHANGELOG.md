@@ -2,6 +2,71 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.15.0 — 2026-08-06
+
+### Changed
+- **Ice-cooled cellars is now disabled by default.** It changes survival
+  balance (roughly double food shelf life) rather than just smoothing the UI,
+  so it's opt-in like the distance challenge. Enable it in the in-game
+  settings (Ctrl+Shift+L or `.slconfig`) or set `IceCooledCellars: true` in
+  `features.json`, then restart. If you already have a `features.json` with
+  the feature stored as enabled, nothing changes for you.
+
+## 1.14.1 — 2026-08-02
+
+### Fixed
+- **Ice lining a cellar's walls, floor or ceiling now counts.** The ice scan
+  covered only the room's interior bounding box, so wall-lining builds (the
+  natural way to do it) registered almost no blocks. The scan now includes a
+  one-block shell around the room; both wall ice and free-standing ice inside
+  count.
+- **Wall ice no longer melts at the lonely-single-block rate.** A solid ice
+  block isn't part of the room's air space, so the melt check saw a degenerate
+  one-cell "room" instead of the cellar and never saw the other ice. The melt
+  logic now resolves the real cellar through the ice block's open neighbor
+  cells, so a well-stocked cellar protects every block in and around it.
+  Fully buried ice (e.g. the outer layer of a double wall) is treated as
+  insulated and doesn't melt at all.
+
+### Changed
+- Default `IceCellarMinMeltChance` lowered 0.025 → 0.01: a fully chilled
+  cellar now loses about one ice block per ~17 hours of real play time
+  (was ~7). If your `features.json` already stores the old 0.025, lower it by
+  hand or delete the line to pick up the new default.
+
+## 1.14.0 — 2026-08-02
+
+### Added
+- **Cellar-aware ice melting** (phase 2 of ice-cooled cellars). Vanilla melts
+  ice by the *outdoor* climate — cellar ice melted as fast as ice in the
+  summer sun, and every melted block left behind a full water source. Now ice
+  in a proper cellar melts based on the ice-chilled room temperature instead:
+  the more ice you stock, the colder the room and the slower each block melts.
+  A fully iced cellar loses roughly one block per ~7 hours of real play time
+  (tunable via `IceCellarMinMeltChance`; set it to 0 to make fully-chilled ice
+  last forever), and the loss accelerates as the stock dwindles and the cellar
+  warms. Ice melting in any fully enclosed room vanishes instead of turning
+  into a water source, so cellars no longer flood. Winter already prevented
+  melt rolls entirely (outdoor ≤ 2°C) and still does.
+
+## 1.13.0 — 2026-08-02
+
+### Added
+- **Ice-cooled cellars.** Stacking blocks of ice (glacier ice, packed glacier
+  ice, lake ice) inside a proper cellar now chills it below the vanilla 5°C
+  cellar floor. The effect starts at 4 ice blocks and maxes out at 10, where
+  the cellar behaves as if at −3°C — food keeps roughly twice as long as in a
+  perfect vanilla cellar. Scales with cellar quality, never raises the rate
+  (winter cold passes through untouched), and stays within the game's own
+  perish-rate floor, so nothing "freezes". Container tooltips show the ice
+  count and chill strength; the perish-speed multiplier reflects it too.
+  Thresholds and target temperature are tunable in `features.json`
+  (`IceCellarMinBlocks`, `IceCellarFullBlocks`, `IceCellarTemp`).
+- **Ice now counts as a cooling cellar-wall material.** Vanilla treats ice
+  walls as non-cooling (like wood), which would have penalized the room's
+  cellar rating for every ice block placed; with this fix ice walls rate like
+  stone or soil.
+
 ## 1.12.1 — 2026-07-23
 
 - Compatibility release for Vintage Story 1.22.5. Rebuilt against the 1.22.5

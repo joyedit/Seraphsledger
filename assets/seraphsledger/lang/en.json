@@ -12,5 +12,8 @@
 	"largestoragevessel-title": "Large Storage Vessel Contents",
 
 	"block-reed-largebasket-*": "Large Basket",
-	"largebasket-title": "Large Basket Contents"
+	"largebasket-title": "Large Basket Contents",
+
+	"icecellar-chilled": "Ice-chilled cellar: {0} ice blocks ({1}% chill)",
+	"icecellar-needsmore": "Ice blocks nearby: {0} — needs {1} to start chilling the cellar"
 }
