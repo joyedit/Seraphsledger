@@ -62,7 +62,7 @@ namespace SeraphsLedger
             // feature regardless of our own toggle - a player who installed it
             // asked for it explicitly, and its config governs from there.
             var cfg = SeraphsLedgerConfig.Load(api);
-            if (cfg.IceCooledCellars && api.ModLoader.IsModEnabled("icecellar"))
+            if (cfg.IceCooledCellars && api.ModLoader.IsModEnabled("icecooledcellars"))
             {
                 api.Logger.Notification(
                     "[seraphsledger] standalone Ice Cellar mod detected, leaving ice-cooled cellars to it");
