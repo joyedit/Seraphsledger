@@ -32,9 +32,10 @@ namespace SeraphsLedger
         public bool LargeContainers = true;
         public bool SilencedVoices = true;
 
-        // Ice-cooled cellars: off by default - it changes survival balance
-        // (longer shelf life) rather than just polishing the UI, so players
-        // opt in via the settings dialog. Ice blocks placed in a proper cellar
+        // Ice-cooled cellars: enabled by default deliberately - turning it off
+        // reverts cellar ice to vanilla behavior (melts by outdoor climate and
+        // floods the room), so a default-off update would silently cost
+        // existing worlds their stocked ice. Ice blocks placed in a proper cellar
         // chill it below the vanilla 5°C floor, slowing food spoilage (about 2x shelf
         // life at FullBlocks). MinBlocks is where the effect starts, FullBlocks
         // where it maxes out, Temp the effective temperature at full effect
@@ -44,7 +45,7 @@ namespace SeraphsLedger
         // minutes), so even a fully iced cellar slowly loses blocks - at the
         // default about one block per ~17 hours of real play time. 0 makes
         // fully-chilled cellar ice last forever.
-        public bool IceCooledCellars = false;
+        public bool IceCooledCellars = true;
         public int IceCellarMinBlocks = 4;
         public int IceCellarFullBlocks = 10;
         public float IceCellarTemp = -3f;

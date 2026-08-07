@@ -5,12 +5,12 @@ All notable changes to The Seraph's Ledger are documented here.
 ## 1.15.0 — 2026-08-06
 
 ### Changed
-- **Ice-cooled cellars is now disabled by default.** It changes survival
-  balance (roughly double food shelf life) rather than just smoothing the UI,
-  so it's opt-in like the distance challenge. Enable it in the in-game
-  settings (Ctrl+Shift+L or `.slconfig`) or set `IceCooledCellars: true` in
-  `features.json`, then restart. If you already have a `features.json` with
-  the feature stored as enabled, nothing changes for you.
+- **Ice-cooled cellars ships enabled by default.** Turning it off doesn't
+  just remove the chill — cellar ice reverts to vanilla behavior, melting by
+  the outdoor climate and flooding the room with water sources — so shipping
+  it off would silently cost updating players their stocked cellars. Anyone
+  who prefers vanilla behavior can switch it off in the in-game settings
+  (Ctrl+Shift+L or `.slconfig`).
 
 ## 1.14.1 — 2026-08-02
 
