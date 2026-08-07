@@ -2,17 +2,28 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.15.2 — 2026-08-07
+
+### Fixed
+- **The ice-cellar hand-off in 1.15.1 never actually triggered.** It looked for
+  the standalone mod under the id `icecellar`, but that id was already taken on
+  the ModDB, so Ice Cellar had to register as **`icecooledcellars`**. The check
+  keys off the modid, so it silently never matched: running 1.15.1 together
+  with the released Ice Cellar meant both mods patched the perish rate and
+  chilled the cellar twice — roughly halving spoilage twice over, with nothing
+  in the log to explain it. **If you run both mods, update to 1.15.2.**
+
 ## 1.15.1 — 2026-08-07
 
 ### Changed
 - **Ice-cooled cellars now defer to the standalone Ice Cellar mod.** The
-  feature has been released on its own as the Ice Cellar mod (modid
-  `icecooledcellars`) for players who want it without the rest of the bundle;
-  it stays in Seraph's Ledger unchanged for
-  everyone else. Both mods patch the same vanilla methods, so with the
-  standalone installed this mod leaves the feature to it (logged at startup)
-  rather than chilling cellars twice. Ice Cellar picks up any values you tuned
-  in `features.json` on its first run.
+  feature has been released on its own for players who want it without the rest
+  of the bundle; it stays in Seraph's Ledger unchanged for everyone else. Both
+  mods patch the same vanilla methods, so with the standalone installed this
+  mod leaves the feature to it (logged at startup) rather than chilling cellars
+  twice. Ice Cellar picks up any values you tuned in `features.json` on its
+  first run.
+  - Superseded by 1.15.2 — the check named the wrong modid and never fired.
 
 ## 1.15.0 — 2026-08-06
 
