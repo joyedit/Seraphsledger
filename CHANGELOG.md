@@ -2,6 +2,17 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.15.1 — 2026-08-07
+
+### Changed
+- **Ice-cooled cellars now defer to the standalone Ice Cellar mod.** The
+  feature has been released on its own as `icecellar` for players who want it
+  without the rest of the bundle; it stays in Seraph's Ledger unchanged for
+  everyone else. Both mods patch the same vanilla methods, so with the
+  standalone installed this mod leaves the feature to it (logged at startup)
+  rather than chilling cellars twice. Ice Cellar picks up any values you tuned
+  in `features.json` on its first run.
+
 ## 1.15.0 — 2026-08-06
 
 ### Changed

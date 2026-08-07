@@ -55,8 +55,19 @@ namespace SeraphsLedger
             // reduced perish rate to stored food, the client shows it in the
             // container tooltip. Start() runs for each side (same process in
             // singleplayer), hence the HasAnyPatches guard.
+            //
+            // The same feature also ships as the standalone Ice Cellar mod. It
+            // patches the same vanilla methods, and two stacked postfixes would
+            // chill a cellar twice, so whenever it's installed we let it own the
+            // feature regardless of our own toggle - a player who installed it
+            // asked for it explicitly, and its config governs from there.
             var cfg = SeraphsLedgerConfig.Load(api);
-            if (cfg.IceCooledCellars && !Harmony.HasAnyPatches(IceCellarHarmonyId))
+            if (cfg.IceCooledCellars && api.ModLoader.IsModEnabled("icecellar"))
+            {
+                api.Logger.Notification(
+                    "[seraphsledger] standalone Ice Cellar mod detected, leaving ice-cooled cellars to it");
+            }
+            else if (cfg.IceCooledCellars && !Harmony.HasAnyPatches(IceCellarHarmonyId))
             {
                 IceCellarPatches.Configure(cfg);
                 iceCellarHarmony = new Harmony(IceCellarHarmonyId);
