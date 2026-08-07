@@ -1,0 +1,123 @@
+<p style="line-height: 100%; margin-bottom: 0.03in;"><span style="color: #2e4a62;"><span style="font-size: xx-large;"><strong>The Seraph&rsquo;s Ledger</strong></span></span></p>
+<p style="line-height: 100%; margin-bottom: 0.03in;">&nbsp;</p>
+<p style="line-height: 100%; margin-bottom: 0.04in;"><span style="color: #555555;"><span style="font-size: medium;"><em>A personal bundle of small quality-of-life tweaks for Vintage Story.</em></span></span></p>
+<p style="line-height: 100%; margin-bottom: 0.14in; border-top: none; border-bottom: 1.50pt solid #2e4a62; border-left: none; border-right: none; padding: 0in 0in 0.08in 0in;"><br /><br /></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">The Seraph&rsquo;s Ledger gathers a handful of independent conveniences into one mod &mdash; a trader-tracking ledger, larger storage containers, inventory shortcuts, automatic enemy loot, and a few audio/UI tweaks. Every runtime feature can be switched on or off individually from an in-game settings panel, so you can run the whole bundle or just the parts you want.</p>
+<h2 class="western">What it does</h2>
+<p>&nbsp;</p>
+<p><strong>Ice-Cooled Cellars</strong></p>
+<p>Keep your food twice as long by stocking your cellar with ice.</p>
+<p>Place blocks of ice (glacier ice, packed glacier ice &mdash; anything icy) in a proper cellar and the room chills below the vanilla 5&deg;C cellar floor. The effect starts at 4 ice blocks and maxes out at 10, where the cellar behaves as if it were about &minus;3&deg;C &mdash; roughly double the shelf life of a perfect vanilla cellar. Nothing freezes; food just keeps longer.</p>
+<p>- Placement is flexible: ice counts whether it's stacked inside the room or lining the walls, floor, or ceiling &mdash; wall lining keeps your storage space free.<br />- Ice walls now actually cool: vanilla treats ice as a non-cooling wall material (like wood!); with this mod, ice walls rate like stone or soil for the cellar bonus.<br />- Ice melts realistically: instead of vanishing at outdoor-summer speed, cellar ice melts based on the chilled room temperature &mdash; the more ice you stock, the colder the room and the slower each block melts. A fully chilled cellar loses roughly one block per ~17 hours of play, faster as the stock dwindles. In winter, cellar ice doesn't melt at all.<br />- No flooding: ice melting indoors simply vanishes &mdash; no water sources left behind in your cellar. Fully buried ice (like the outer layer of a double wall) is insulated and never melts.<br />- See it working: hover any container in the cellar &mdash; the tooltip shows your ice count and chill strength, and the "Stored food perish speed" numbers update to match.</p>
+<p>The room must qualify as a vanilla cellar (small, enclosed, no exits). Thresholds, target temperature, and melt rate are tunable in ModConfig/seraphsledger/features.json; the whole feature can be toggled in the in-game settings panel (Ctrl+Shift+L).</p>
+<p><em>Only want this one feature?</em> It also ships on its own as the <strong>Ice Cellar</strong> mod &mdash; same mechanic, none of the rest of the bundle. <strong>Running both is safe from Seraph&rsquo;s Ledger 1.15.2 onward</strong>: this mod detects Ice Cellar and hands the feature over, so nothing is applied twice. On <strong>1.15.1 or older</strong> that hand-off doesn&rsquo;t work &mdash; update, or switch ice-cooled cellars off here.</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Trader ledger</strong></span></span></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">Automatically records every trader whose Buy/Sell window you open &mdash; their location, name, type, and full buy/sell lists (prices and stock as of your last visit). Stored per-world; revisiting a trader updates their entry in place.</p>
+<ul>
+<li value="1">
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Map waypoints</strong> &mdash; a color-coded (by type) waypoint is dropped at each trader the first time you visit. <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">.traders wp</span></span></span> maps any not yet marked.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>In-game browser</strong> &mdash; open with <strong>Ctrl+K</strong> (rebindable). Search by name, type, or item; sort by type/name/recent; click <strong>[show on map]</strong> to jump to that trader.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Chat</strong> &mdash; <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">.traders</span></span></span> lists everyone; <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">.traders &lt;text&gt;</span></span></span> shows full wares for matches; <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">.traders export</span></span></span> writes a Markdown summary to the mod data folder.</p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Large storage containers</strong></span></span></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">Bigger variants of the vanilla containers, each crafted from two of the base container in a shapeless grid recipe. They keep the vanilla look, footprint, and sounds.</p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Large Trunk</strong> &mdash; 100 slots, crafted from 2&times; Trunk</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Large Chest</strong> &mdash; 45 slots, crafted from 2&times; Chest</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Large Labeled Chest</strong> &mdash; 45 slots, crafted from 2&times; Labeled Chest</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Large Storage Vessel</strong> &mdash; 35 slots, crafted from 2&times; Storage Vessel</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Large Basket</strong> &mdash; 21 slots, crafted from 2&times; Basket</p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Inventory quality-of-life</strong></span></span></p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Ctrl + left-click</strong> any slot in an inventory dialog to dump every non-empty slot of that inventory into the open container(s).</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Sort</strong> button in the player inventory &mdash; server-authoritative sort of your worn-bag contents.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Trash</strong> button in the player inventory &mdash; destroys the stack currently held on the cursor.</p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Combat / loot</strong></span></span></p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Hostile creatures <strong>vanish 2 seconds after death and drop their loot automatically</strong> &mdash; no knife-harvesting required. Applies to anything in the vanilla <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">hostile</span></span></span> spawn group (drifters, locusts, bells, shivers, bowtorn, and hostile animals like wolves, bears, hyenas) plus modded mobs using that group. Drops match a full harvest (scaled by <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">animalLootDropRate</span></span></span> for non-mechanical mobs); harvesting the body yourself within the 2 seconds never duplicates loot.</p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Creative inventory</strong></span></span></p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">The search box is <strong>auto-focused</strong> when the creative inventory opens &mdash; start typing immediately. <em>(While focused, the </em><em><strong>E</strong></em><em> key types into the search instead of closing the dialog &mdash; close with </em><em><strong>Escape</strong></em><em> or the </em><em><strong>X</strong></em><em>.)</em></p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Audio</strong></span></span></p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Silenced character voice sounds &mdash; both player/seraph voices and the trader greeting.</p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Distance Challenge</strong></span></span></p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Distance challenge &mdash; HUD travel budget that drains as you walk; can't move at 0. /steps add|set.</p>
+</li>
+</ul>
+<h2 class="western">Requirements</h2>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Vintage Story (no specific minimum version pinned; built against current game APIs).</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">No other mod dependencies.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Singleplayer or multiplayer. The fast-despawn loot feature is server-side, so on a dedicated server it follows the server&rsquo;s own config; install the mod on the server for that and the trader/container features to work.</p>
+</li>
+</ul>
+<h2 class="western">Selecting or deselecting individual features</h2>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">Press <strong>Ctrl+Shift+L</strong> (rebindable) or run <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">.slconfig</span></span></span> to open the settings panel. It has one switch per <strong>runtime</strong> feature:</p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Trader ledger</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Ctrl+click move-all</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Sort / Trash buttons</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Creative search auto-focus</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Enemy fast-despawn</p>
+</li>
+<li>Large Containers</li>
+<li>Silenced Voices</li>
+<li>Ice-cooled cellars</li>
+<li>Distance challenge</li>
+</ul>
+<p style="line-height: 0.19in; margin-top: 0.08in; margin-bottom: 0.08in;">Your choices are saved to <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">ModConfig/seraphsledger/features.json</span></span></span>. <strong>A restart is required</strong> for changes to take effect &mdash; these features are wired up at load time (Harmony patches, hotkeys, event handlers), so the panel warns you of this.</p>
