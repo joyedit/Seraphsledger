@@ -95,6 +95,13 @@ namespace SeraphsLedger
                 },
                 new Feature
                 {
+                    Title = "Material swatch tool",
+                    Blurb = "/sw mark two corners, Ctrl+Shift+M to restyle a build's material, with undo.",
+                    Get = () => config.MaterialSwatch,
+                    Set = v => config.MaterialSwatch = v,
+                },
+                new Feature
+                {
                     Title = "Distance challenge",
                     Blurb = "HUD travel budget that drains as you walk; can't move at 0. /steps add|set.",
                     Get = () => config.StepCountdown,

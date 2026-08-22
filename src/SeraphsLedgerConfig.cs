@@ -51,6 +51,13 @@ namespace SeraphsLedger
         public float IceCellarTemp = -3f;
         public float IceCellarMinMeltChance = 0.01f;
 
+        // Material swatch tool: /sw mark two corners, then Ctrl+Shift+M to swap
+        // one building material for another across the selection, with undo.
+        // Costs nothing until used, so it ships on. Needs the controlserver
+        // privilege, and stands aside for the standalone Swatch mod when that
+        // is installed (both claim the same command and hotkey).
+        public bool MaterialSwatch = true;
+
         // Distance-challenge mode is off by default - it's an opt-in challenge run,
         // not a tweak everyone wants. StartMeters seeds a player's budget the first
         // time the feature ever sees them, so they aren't instantly frozen.

@@ -2,6 +2,39 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.16.1 — 2026-08-22
+
+- Compatibility release for Vintage Story 1.22.7. Rebuilt against the 1.22.7
+  assemblies; no code changes.
+
+## 1.16.0 — 2026-08-12
+
+### Added
+- **Material swatch tool** — try a different material on a build before
+  committing to it. `/sw mark` two opposite corners, look over the highlighted
+  area, then **Ctrl+Shift+M**: the left list holds the materials found in the
+  selection, the right list what each can become and how many blocks would
+  change. Apply, and Undo if you don't like it (last 25 swaps per player).
+  - Swaps are worked out from the block codes themselves — a code is read as
+    hyphen-separated tokens and the registry is asked which single-token
+    changes exist — so every finish of a material converts in one action
+    (cobble, bricks, polished, stairs, slabs), stair facings survive, and
+    modded blocks are picked up without a list to maintain.
+  - Only blocks somebody placed are listed or swapped. Grass, soil, gravel,
+    sand, ore, raw stone, water and plant life stay out of it, so the material
+    list holds the build rather than the ground under it, and a wall can be
+    restyled without repainting the hillside behind it.
+  - Materials are listed above kinds of block, since restyling a build usually
+    means the material rather than the shape.
+  - Chiselled blocks are re-materialed in place, keeping their carving — and
+    are the one place raw stone still counts, since somebody carved it. Blocks
+    holding contents or state (chests, doors) are left alone and reported.
+  - Also driveable from chat: `/sw list`, `/sw options [material]`,
+    `/sw swap <from> <to>`, `/sw undo`, `/sw unmark`. Needs the `controlserver`
+    privilege.
+  - Available on its own as the standalone **Swatch** mod; install it alongside
+    this one and it takes over the feature, the same way Ice Cellar does.
+
 ## 1.15.2 — 2026-08-07
 
 ### Fixed

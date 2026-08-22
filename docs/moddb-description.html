@@ -2,7 +2,7 @@
 <p style="line-height: 100%; margin-bottom: 0.03in;">&nbsp;</p>
 <p style="line-height: 100%; margin-bottom: 0.04in;"><span style="color: #555555;"><span style="font-size: medium;"><em>A personal bundle of small quality-of-life tweaks for Vintage Story.</em></span></span></p>
 <p style="line-height: 100%; margin-bottom: 0.14in; border-top: none; border-bottom: 1.50pt solid #2e4a62; border-left: none; border-right: none; padding: 0in 0in 0.08in 0in;"><br /><br /></p>
-<p style="line-height: 0.19in; margin-bottom: 0.08in;">The Seraph&rsquo;s Ledger gathers a handful of independent conveniences into one mod &mdash; a trader-tracking ledger, larger storage containers, inventory shortcuts, automatic enemy loot, and a few audio/UI tweaks. Every runtime feature can be switched on or off individually from an in-game settings panel, so you can run the whole bundle or just the parts you want.</p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">The Seraph&rsquo;s Ledger gathers a handful of independent conveniences into one mod &mdash; a trader-tracking ledger, larger storage containers, inventory shortcuts, automatic enemy loot, a material swatch tool for builders, and a few audio/UI tweaks. Every runtime feature can be switched on or off individually from an in-game settings panel, so you can run the whole bundle or just the parts you want.</p>
 <h2 class="western">What it does</h2>
 <p>&nbsp;</p>
 <p><strong>Ice-Cooled Cellars</strong></p>
@@ -11,6 +11,30 @@
 <p>- Placement is flexible: ice counts whether it's stacked inside the room or lining the walls, floor, or ceiling &mdash; wall lining keeps your storage space free.<br />- Ice walls now actually cool: vanilla treats ice as a non-cooling wall material (like wood!); with this mod, ice walls rate like stone or soil for the cellar bonus.<br />- Ice melts realistically: instead of vanishing at outdoor-summer speed, cellar ice melts based on the chilled room temperature &mdash; the more ice you stock, the colder the room and the slower each block melts. A fully chilled cellar loses roughly one block per ~17 hours of play, faster as the stock dwindles. In winter, cellar ice doesn't melt at all.<br />- No flooding: ice melting indoors simply vanishes &mdash; no water sources left behind in your cellar. Fully buried ice (like the outer layer of a double wall) is insulated and never melts.<br />- See it working: hover any container in the cellar &mdash; the tooltip shows your ice count and chill strength, and the "Stored food perish speed" numbers update to match.</p>
 <p>The room must qualify as a vanilla cellar (small, enclosed, no exits). Thresholds, target temperature, and melt rate are tunable in ModConfig/seraphsledger/features.json; the whole feature can be toggled in the in-game settings panel (Ctrl+Shift+L).</p>
 <p><em>Only want this one feature?</em> It also ships on its own as the <strong>Ice Cellar</strong> mod &mdash; same mechanic, none of the rest of the bundle. <strong>Running both is safe from Seraph&rsquo;s Ledger 1.15.2 onward</strong>: this mod detects Ice Cellar and hands the feature over, so nothing is applied twice. On <strong>1.15.1 or older</strong> that hand-off doesn&rsquo;t work &mdash; update, or switch ice-cooled cellars off here.</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Material swatch tool</strong></span></span></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">See a build in a different material before you commit to it. Aim at one corner and run <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">/sw mark</span></span></span>, then aim at the opposite corner and mark again &mdash; two marks at the same height read as a footprint and the top is taken from the rain map, so a whole building is bracketed without flying up to its roof. The area is highlighted so you can see what you caught. Press <strong>Ctrl+Shift+M</strong>: the materials found in the selection are on the left, what each can become is on the right with the number of blocks each swap would change. <strong>Apply</strong>, and <strong>Undo</strong> if you don&rsquo;t like it.</p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Every finish of a material moves at once</strong> &mdash; cobble, bricks, polished, stairs and slabs all follow, and stair facings survive the swap. The choices come from the block registry rather than a built-in list, so modded stone and wood show up on their own and swaps that don&rsquo;t exist are never offered.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Only blocks somebody placed are listed or swapped.</strong> Grass, soil, gravel, sand, ore, raw stone, water and plant life stay out of it, so the list holds your build rather than the ground under it &mdash; and restyling a wall never repaints the hillside behind it.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Chiselled blocks are re-materialed in place</strong>, keeping their carving.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Blocks holding contents or state</strong> &mdash; chests, doors &mdash; are skipped and reported rather than swapped and emptied.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Undo</strong> covers your last 25 swaps, newest first, from the dialog or <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">/sw undo</span></span></span>.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Chat equivalents</strong> &mdash; <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">/sw list</span></span></span>, <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">/sw options [material]</span></span></span>, <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">/sw swap &lt;from&gt; &lt;to&gt;</span></span></span>, <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">/sw unmark</span></span></span>. Requires the <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">controlserver</span></span></span> privilege.</p>
+</li>
+</ul>
+<p><em>Only want this one feature?</em> It also ships on its own as the <strong>Swatch</strong> mod &mdash; install it alongside this one and Seraph&rsquo;s Ledger hands the feature over, the same way Ice Cellar works.</p>
+<p>&nbsp;</p>
 <p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Trader ledger</strong></span></span></p>
 <p style="line-height: 0.19in; margin-bottom: 0.08in;">Automatically records every trader whose Buy/Sell window you open &mdash; their location, name, type, and full buy/sell lists (prices and stock as of your last visit). Stored per-world; revisiting a trader updates their entry in place.</p>
 <ul>
@@ -118,6 +142,7 @@
 <li>Large Containers</li>
 <li>Silenced Voices</li>
 <li>Ice-cooled cellars</li>
+<li>Material swatch tool</li>
 <li>Distance challenge</li>
 </ul>
 <p style="line-height: 0.19in; margin-top: 0.08in; margin-bottom: 0.08in;">Your choices are saved to <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">ModConfig/seraphsledger/features.json</span></span></span>. <strong>A restart is required</strong> for changes to take effect &mdash; these features are wired up at load time (Harmony patches, hotkeys, event handlers), so the panel warns you of this.</p>
