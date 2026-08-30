@@ -2,6 +2,26 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.17.0 — 2026-08-29
+
+### Added
+- **Barrel ingredient portions** — a barrel's item slot now takes only as much
+  as the liquid already in it can actually use, and leaves the rest in your
+  inventory. Barrel recipes are exact ratios, so a full 50 L barrel of water
+  wants exactly 50 lime for limewater and exactly 5 oak/acacia logs for weak
+  tannin; drop a whole stack in and vanilla swallows the lot, then matches no
+  recipe at all until you work out how much to take back out.
+  - Works out the number from the recipes themselves, so it covers every barrel
+    recipe (50 L of tannin caps at 25 small hides, 12 medium, 8 large) and any
+    added by other mods, rather than a hard-coded list.
+  - Applies to every way items go in: click, shift-click, ctrl+click move-all,
+    and hopper feeds. The slot simply stops accepting once it holds enough.
+  - Only kicks in when the barrel already holds a liquid — that liquid is what
+    fixes the ratio. An empty barrel is left alone, so loading the solids first
+    still works, and too little liquid for even one batch still lets a single
+    portion in rather than refusing everything.
+  - Toggleable in the settings panel (Ctrl+Shift+L).
+
 ## 1.16.1 — 2026-08-22
 
 - Compatibility release for Vintage Story 1.22.7. Rebuilt against the 1.22.7

@@ -95,6 +95,13 @@ namespace SeraphsLedger
                 },
                 new Feature
                 {
+                    Title = "Barrel ingredient portions",
+                    Blurb = "Barrels only take what the liquid can use (50 lime / 5 logs per full barrel).",
+                    Get = () => config.BarrelIngredientPortions,
+                    Set = v => config.BarrelIngredientPortions = v,
+                },
+                new Feature
+                {
                     Title = "Material swatch tool",
                     Blurb = "/sw mark two corners, Ctrl+Shift+M to restyle a build's material, with undo.",
                     Get = () => config.MaterialSwatch,

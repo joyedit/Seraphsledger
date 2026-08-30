@@ -34,8 +34,10 @@ namespace SeraphsLedger
 
         private const string HarmonyId = "seraphsledger.ctrlmoveall";
         private const string IceCellarHarmonyId = "seraphsledger.icecellar";
+        private const string BarrelHarmonyId = "seraphsledger.barrelportions";
         private Harmony harmony;
         private Harmony iceCellarHarmony;
+        private Harmony barrelHarmony;
         private ICoreServerAPI sapi;
         private ICoreClientAPI capi;
         private EnemyDropDespawn enemyDropDespawn;
@@ -101,6 +103,21 @@ namespace SeraphsLedger
                         nameof(Vintagestory.GameContent.BlockEntityContainer.GetBlockInfo)),
                     postfix: new HarmonyMethod(AccessTools.Method(
                         typeof(IceCellarPatches), nameof(IceCellarPatches.GetBlockInfoPostfix))));
+            }
+
+            // Barrel ingredient portioning. Also both sides: an inventory move is
+            // run on the client for responsiveness and re-run on the server from
+            // the packet, so a clamp applied to only one of them would desync.
+            // GetRemainingSlotSpace is the one method every put-into-slot path
+            // sizes itself with; the postfix ignores everything that isn't a
+            // barrel input slot.
+            if (cfg.BarrelIngredientPortions && !Harmony.HasAnyPatches(BarrelHarmonyId))
+            {
+                barrelHarmony = new Harmony(BarrelHarmonyId);
+                barrelHarmony.Patch(
+                    AccessTools.Method(typeof(ItemSlot), nameof(ItemSlot.GetRemainingSlotSpace)),
+                    postfix: new HarmonyMethod(AccessTools.Method(
+                        typeof(BarrelPortionPatches), nameof(BarrelPortionPatches.GetRemainingSlotSpacePostfix))));
             }
         }
 
@@ -306,6 +323,8 @@ namespace SeraphsLedger
             harmony = null;
             iceCellarHarmony?.UnpatchAll(IceCellarHarmonyId);
             iceCellarHarmony = null;
+            barrelHarmony?.UnpatchAll(BarrelHarmonyId);
+            barrelHarmony = null;
             ClientChannel = null;
             configDialog = null;
             enemyDropDespawn?.Dispose();

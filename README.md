@@ -48,6 +48,20 @@ They keep the vanilla appearance, footprint, and open/close sounds.
 - **Trash** button in the player inventory — destroys whatever stack is
   currently held on the mouse cursor.
 
+### Barrels
+
+- **Barrel ingredient portions** — the item slot of a barrel only takes as many
+  items as the liquid already in it can turn into something; the rest stays in
+  your inventory. Barrel recipes are exact ratios, so a full 50 L barrel of water
+  takes exactly **50 lime** (limewater) or exactly **5 oak/acacia logs** (weak
+  tannin), and 50 L of tannin takes at most **25 small hides**. Vanilla accepts
+  the whole stack and then matches no recipe at all.
+  - The numbers come from the barrel recipes themselves, so modded recipes are
+    covered too.
+  - Applies to click, shift-click, ctrl+click move-all and hopper feeds alike.
+  - Only applies once the barrel holds a liquid — that liquid is what fixes the
+    ratio; an empty barrel behaves as before.
+
 ### Combat / loot
 
 - **Hostile creatures vanish 2 seconds after they die and drop their loot
@@ -75,8 +89,8 @@ They keep the vanilla appearance, footprint, and open/close sounds.
 - **Toggle features on or off in-game** — press **Ctrl+Shift+L** (rebindable) or
   run `.slconfig` to open a settings window with a switch per feature: trader
   ledger, ctrl+click move-all, Sort/Trash buttons, creative search auto-focus,
-  enemy fast-despawn, large containers, silenced voices, and the distance
-  challenge. Choices are saved to `ModConfig/seraphsledger/features.json`.
+  enemy fast-despawn, large containers, silenced voices, barrel ingredient
+  portions, and the distance challenge. Choices are saved to `ModConfig/seraphsledger/features.json`.
   - **A restart is required** for changes to take effect — the features are wired
     up at load time (Harmony patches, hotkeys, event handlers, recipe/asset
     gating), so the window warns you of this.

@@ -51,6 +51,15 @@ namespace SeraphsLedger
         public float IceCellarTemp = -3f;
         public float IceCellarMinMeltChance = 0.01f;
 
+        // Barrel ingredient portioning: a barrel's input slot only takes as many
+        // items as the liquid already in it can actually use (50 lime or 5 oak
+        // logs for a full 50L water barrel, 25 small hides for 50L of tannin);
+        // the rest stays in your inventory instead of being swallowed into a
+        // barrel that then matches no recipe at all. Purely a guard rail - it
+        // never lets a barrel hold a combination vanilla wouldn't - so it ships
+        // on.
+        public bool BarrelIngredientPortions = true;
+
         // Material swatch tool: /sw mark two corners, then Ctrl+Shift+M to swap
         // one building material for another across the selection, with undo.
         // Costs nothing until used, so it ships on. Needs the controlserver

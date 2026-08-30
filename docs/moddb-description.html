@@ -2,7 +2,7 @@
 <p style="line-height: 100%; margin-bottom: 0.03in;">&nbsp;</p>
 <p style="line-height: 100%; margin-bottom: 0.04in;"><span style="color: #555555;"><span style="font-size: medium;"><em>A personal bundle of small quality-of-life tweaks for Vintage Story.</em></span></span></p>
 <p style="line-height: 100%; margin-bottom: 0.14in; border-top: none; border-bottom: 1.50pt solid #2e4a62; border-left: none; border-right: none; padding: 0in 0in 0.08in 0in;"><br /><br /></p>
-<p style="line-height: 0.19in; margin-bottom: 0.08in;">The Seraph&rsquo;s Ledger gathers a handful of independent conveniences into one mod &mdash; a trader-tracking ledger, larger storage containers, inventory shortcuts, automatic enemy loot, a material swatch tool for builders, and a few audio/UI tweaks. Every runtime feature can be switched on or off individually from an in-game settings panel, so you can run the whole bundle or just the parts you want.</p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">The Seraph&rsquo;s Ledger gathers a handful of independent conveniences into one mod &mdash; a trader-tracking ledger, larger storage containers, inventory shortcuts, automatic enemy loot, a material swatch tool for builders, barrel ingredient portions, and a few audio/UI tweaks. Every runtime feature can be switched on or off individually from an in-game settings panel, so you can run the whole bundle or just the parts you want.</p>
 <h2 class="western">What it does</h2>
 <p>&nbsp;</p>
 <p><strong>Ice-Cooled Cellars</strong></p>
@@ -34,6 +34,20 @@
 </li>
 </ul>
 <p><em>Only want this one feature?</em> It also ships on its own as the <strong>Swatch</strong> mod &mdash; install it alongside this one and Seraph&rsquo;s Ledger hands the feature over, the same way Ice Cellar works.</p>
+<p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Barrel ingredient portions</strong></span></span></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">Barrel recipes are exact ratios, not &ldquo;up to&rdquo;. A full 50&nbsp;L barrel of water wants exactly <strong>50 lime</strong> for limewater and exactly <strong>5 oak or acacia logs</strong> for weak tannin &mdash; tip a whole stack in and vanilla swallows the lot, then matches no recipe at all until you work out how much to pull back out. With this on, the barrel takes what it can use and the remainder stays in your inventory.</p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Every barrel recipe, not a list of a few</strong> &mdash; the amount is worked out from the recipes themselves, so 50&nbsp;L of tannin stops at 25 small hides (12 medium, 8 large) and recipes added by other mods are portioned too.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>However you load it</strong> &mdash; click, shift-click, ctrl+click move-all, or a hopper feeding the barrel. The slot just stops accepting once it holds enough.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>An empty barrel is left alone</strong> &mdash; the liquid inside is what fixes the ratio, so loading the solids first still works exactly as it always did.</p>
+</li>
+</ul>
 <p>&nbsp;</p>
 <p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Trader ledger</strong></span></span></p>
 <p style="line-height: 0.19in; margin-bottom: 0.08in;">Automatically records every trader whose Buy/Sell window you open &mdash; their location, name, type, and full buy/sell lists (prices and stock as of your last visit). Stored per-world; revisiting a trader updates their entry in place.</p>
@@ -143,6 +157,7 @@
 <li>Silenced Voices</li>
 <li>Ice-cooled cellars</li>
 <li>Material swatch tool</li>
+<li>Barrel ingredient portions</li>
 <li>Distance challenge</li>
 </ul>
 <p style="line-height: 0.19in; margin-top: 0.08in; margin-bottom: 0.08in;">Your choices are saved to <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">ModConfig/seraphsledger/features.json</span></span></span>. <strong>A restart is required</strong> for changes to take effect &mdash; these features are wired up at load time (Harmony patches, hotkeys, event handlers), so the panel warns you of this.</p>
