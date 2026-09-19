@@ -47,6 +47,11 @@ They keep the vanilla appearance, footprint, and open/close sounds.
   worn-bag contents (consolidates partial stacks, orders by item).
 - **Trash** button in the player inventory — destroys whatever stack is
   currently held on the mouse cursor.
+- **Sort by freshness** button on the Large Storage Vessel — lays the vessel out as a food
+  store: unsealed crocks first, then sealed crocks, each ordered by the "fresh
+  for" time in its tooltip, soonest to spoil first, then empty crocks, then everything else by
+  item. Partial stacks are merged the game's own way, so perishables average
+  their freshness.
 
 ### Barrels
 

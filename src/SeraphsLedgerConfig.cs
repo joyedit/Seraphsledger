@@ -27,6 +27,8 @@ namespace SeraphsLedger
         public bool TraderLedger = true;
         public bool CtrlClickMoveAll = true;
         public bool SortTrashButtons = true;
+        public bool LargeVesselSort = true;
+        public bool LargeVesselSortTooltip = true;
         public bool CreativeSearchAutofocus = true;
         public bool EnemyFastDespawn = true;
         public bool LargeContainers = true;

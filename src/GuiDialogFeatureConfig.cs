@@ -60,6 +60,20 @@ namespace SeraphsLedger
                 },
                 new Feature
                 {
+                    Title = "Large vessel sort",
+                    Blurb = "Sort by freshness on large vessels: crocks first, soonest to spoil first.",
+                    Get = () => config.LargeVesselSort,
+                    Set = v => config.LargeVesselSort = v,
+                },
+                new Feature
+                {
+                    Title = "Large vessel sort tooltip",
+                    Blurb = "Hover text on the vessel's Sort button explaining the order.",
+                    Get = () => config.LargeVesselSortTooltip,
+                    Set = v => config.LargeVesselSortTooltip = v,
+                },
+                new Feature
+                {
                     Title = "Creative search auto-focus",
                     Blurb = "Focuses the search box when the creative inventory opens.",
                     Get = () => config.CreativeSearchAutofocus,

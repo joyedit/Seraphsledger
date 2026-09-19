@@ -51,7 +51,8 @@ namespace SeraphsLedger
             // Registered identically on both sides so the message type ids match.
             api.Network.RegisterChannel(NetworkChannelName)
                 .RegisterMessageType<SortBackpackPacket>()
-                .RegisterMessageType<TrashCursorPacket>();
+                .RegisterMessageType<TrashCursorPacket>()
+                .RegisterMessageType<SortVesselPacket>();
 
             // Ice-cooled cellars run on both sides: the server applies the
             // reduced perish rate to stored food, the client shows it in the
@@ -207,6 +208,22 @@ namespace SeraphsLedger
                     }
                 }
 
+                // Sort button in the large storage vessel's dialog.
+                if (cfg.LargeVesselSort)
+                {
+                    VesselSortButtonPatch.ShowTooltip = cfg.LargeVesselSortTooltip;
+                    var ctor = AccessTools.Constructor(typeof(GuiDialogBlockEntityInventory), new[]
+                    {
+                        typeof(string), typeof(InventoryBase), typeof(BlockPos),
+                        typeof(int), typeof(int), typeof(ICoreClientAPI)
+                    });
+                    if (ctor != null)
+                    {
+                        harmony.Patch(ctor, postfix: new HarmonyMethod(
+                            AccessTools.Method(typeof(VesselSortButtonPatch), nameof(VesselSortButtonPatch.Postfix))));
+                    }
+                }
+
                 // Auto-focus the creative search box when the dialog opens so you
                 // can type a search term immediately without clicking it first.
                 if (cfg.CreativeSearchAutofocus)
@@ -278,7 +295,8 @@ namespace SeraphsLedger
             // symmetric across both sides.
             api.Network.GetChannel(NetworkChannelName)
                 .SetMessageHandler<SortBackpackPacket>(OnSortBackpack)
-                .SetMessageHandler<TrashCursorPacket>(OnTrashCursor);
+                .SetMessageHandler<TrashCursorPacket>(OnTrashCursor)
+                .SetMessageHandler<SortVesselPacket>(VesselSorter.OnSortPacket);
 
             var cfg = SeraphsLedgerConfig.Load(api);
 

@@ -2,6 +2,26 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.18.0 — 2026-09-18
+
+### Added
+- **Large storage vessel sort** — a "Sort by freshness" button under the
+  Large Storage Vessel's slot grid lays it out as a food store:
+  1. unsealed crocks holding food (they spoil at the normal rate, so eat these
+     first)
+  2. sealed crocks holding food
+  3. empty crocks
+  4. everything else, by item
+  - Within each crock group, the crock that will spoil soonest comes first,
+    going by the same "fresh for" time its tooltip shows (the seal and the
+    vessel/cellar rate included).
+  - Partial stacks are merged the game's own way, so perishables average their
+    freshness rather than keeping the fresher stack's timer.
+  - Sorted on the server, and only for a player who has that vessel open.
+  - Hovering the button explains the order; the hover text has its own
+    switch in the settings panel.
+  - Toggleable in the settings panel (Ctrl+Shift+L).
+
 ## 1.17.0 — 2026-08-29
 
 ### Added
