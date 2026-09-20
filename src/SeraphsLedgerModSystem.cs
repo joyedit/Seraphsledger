@@ -65,6 +65,14 @@ namespace SeraphsLedger
             // feature regardless of our own toggle - a player who installed it
             // asked for it explicitly, and its config governs from there.
             var cfg = SeraphsLedgerConfig.Load(api);
+
+            // The tally board's block entity is registered whatever the toggle
+            // says, so boards already placed in a save still load; the toggle
+            // only stops them scanning (and the recipe, in AssetsFinalize).
+            api.RegisterBlockClass("SeraphsLedgerTallyBoard", typeof(BlockTallyBoard));
+            api.RegisterBlockEntityClass("SeraphsLedgerTallyBoard", typeof(BlockEntityTallyBoard));
+            BlockEntityTallyBoard.ScanEnabled = cfg.AnimalTally;
+
             if (cfg.IceCooledCellars && api.ModLoader.IsModEnabled("icecooledcellars"))
             {
                 api.Logger.Notification(
@@ -141,7 +149,7 @@ namespace SeraphsLedger
             base.AssetsFinalize(api);
 
             var cfg = SeraphsLedgerConfig.Load(api);
-            if (cfg.LargeContainers) return;
+            if (cfg.LargeContainers && cfg.AnimalTally) return;
 
             var recipes = api.World?.GridRecipes;
             if (recipes == null) return;
@@ -149,9 +157,9 @@ namespace SeraphsLedger
             foreach (var r in recipes)
             {
                 AssetLocation code = r?.Output?.Code;
-                if (code != null
-                    && code.Domain == "seraphsledger"
-                    && code.Path.StartsWith("large", StringComparison.Ordinal))
+                if (code == null || code.Domain != "seraphsledger") continue;
+                if ((!cfg.LargeContainers && code.Path.StartsWith("large", StringComparison.Ordinal))
+                    || (!cfg.AnimalTally && code.Path.StartsWith("tallyboard", StringComparison.Ordinal)))
                 {
                     r.Enabled = false;
                 }

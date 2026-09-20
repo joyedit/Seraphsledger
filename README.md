@@ -67,6 +67,26 @@ They keep the vanilla appearance, footprint, and open/close sounds.
   - Only applies once the barrel holds a liquid — that liquid is what fixes the
     ratio; an empty barrel behaves as before.
 
+### Animal husbandry
+
+- **Animal Tally Board** — a chalkboard (2 planks + 1 charcoal) you hang on a
+  wall inside a pen. Look at it and the tooltip lists the animals inside the
+  fence, grouped by species and broken down by kind (hens, roosters, pullets,
+  cockerels, chicks; rams, ewes, lambs; ...), plus eggs in henboxes (and how
+  many are fertile) and eggs lying loose.
+  - The pen is found by walking the ground outward from the board the way an
+    animal could: fences, walls, closed gates and closed doors stop it, open
+    doorways don't, so coops attached to the pen count as part of it.
+  - If that walk reaches 100 blocks out, the pen isn't closed; the board says
+    so and counts everything within 100 blocks instead, which makes it a handy
+    gap finder too.
+  - Re-counts every 10 seconds while a player is within 64 blocks.
+  - **Right-click the board** to mark the pen it counts: the outline of a
+    closed pen, or, when it isn't closed, the trail it followed out - which
+    crosses the fence line right at the gap.
+  - Hang it on either face of a wall; if the walk escapes from the side it
+    faces, the board tries the other side of that wall.
+
 ### Combat / loot
 
 - **Hostile creatures vanish 2 seconds after they die and drop their loot

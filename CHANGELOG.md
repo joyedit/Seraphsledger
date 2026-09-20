@@ -2,6 +2,57 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.19.2 — 2026-09-20
+
+### Fixed
+- **Animal tally board** called a closed pen open when the board was hung on
+  the outside face of a wall - the wall of a gatehouse, say. The walk started
+  outside the fence and escaped at once. When the first walk escapes, the
+  board now tries again from the far side of the wall it hangs on and keeps
+  that result if it closes, so which face you hang it on no longer matters.
+
+### Added
+- **Right-click the tally board to mark what it sees.** A closed pen has its
+  outline marked for 25 seconds. An open one gets the trail the count followed
+  out of the pen, which crosses the fence line exactly at the gap, and a chat
+  line with the coordinates it ended at.
+
+## 1.19.1 — 2026-09-19
+
+### Fixed
+- **Animal tally board** undercounted chickens. A bird leaning on a fence has
+  its centre over the fence block (a fence's collision is a thin rail down the
+  middle of its block), so it fell outside the pen; the board now also samples
+  around each animal's footprint. A hen sitting in a henbox the walk can't
+  reach (a stacked row, a raised shelf) now counts too, and every board scans
+  on the same 10-second beat, so two boards in one pen agree instead of
+  showing snapshots up to 10s apart.
+
+### Changed
+- The settings panel is laid out in two columns. One column of every feature
+  had grown taller than a 1080p screen.
+
+## 1.19.0 — 2026-09-18
+
+### Added
+- **Animal Tally Board** — a slate chalkboard, hung like a painting, that
+  counts the animals in its pen. Look at it and the tooltip shows each species
+  inside the fence with a breakdown by kind (Hen 14 · Rooster 2 · Pullet 3 ·
+  Chick 3), eggs in henboxes with how many are fertile, and eggs lying loose.
+  Crafted from 2 planks and 1 charcoal.
+  - Finds the pen by walking the ground outward from the board the way an
+    animal could: fences, walls, closed gates and closed doors stop it, open
+    doorways let it through, so coops attached to the pen are part of it. One
+    board covers a pen with several coops.
+  - If the walk reaches 100 blocks out, the pen has a gap or an open gate. The
+    board says so and counts everything within 100 blocks instead.
+  - Counts any animal (chickens, pigs, goats, sheep, ...), not players,
+    traders or drifters.
+  - Re-counts every 10 seconds while a player is within 64 blocks; the scan
+    runs on the server and only the totals are sent to players.
+  - Toggleable in the settings panel (Ctrl+Shift+L). Off removes the recipe
+    and stops placed boards counting.
+
 ## 1.18.0 — 2026-09-18
 
 ### Added

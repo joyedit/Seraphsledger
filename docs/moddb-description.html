@@ -2,7 +2,7 @@
 <p style="line-height: 100%; margin-bottom: 0.03in;">&nbsp;</p>
 <p style="line-height: 100%; margin-bottom: 0.04in;"><span style="color: #555555;"><span style="font-size: medium;"><em>A personal bundle of small quality-of-life tweaks for Vintage Story.</em></span></span></p>
 <p style="line-height: 100%; margin-bottom: 0.14in; border-top: none; border-bottom: 1.50pt solid #2e4a62; border-left: none; border-right: none; padding: 0in 0in 0.08in 0in;"><br /><br /></p>
-<p style="line-height: 0.19in; margin-bottom: 0.08in;">The Seraph&rsquo;s Ledger gathers a handful of independent conveniences into one mod &mdash; a trader-tracking ledger, larger storage containers, inventory shortcuts, automatic enemy loot, a material swatch tool for builders, barrel ingredient portions, and a few audio/UI tweaks. Every runtime feature can be switched on or off individually from an in-game settings panel, so you can run the whole bundle or just the parts you want.</p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">The Seraph&rsquo;s Ledger gathers a handful of independent conveniences into one mod &mdash; a trader-tracking ledger, larger storage containers, inventory shortcuts, automatic enemy loot, a material swatch tool for builders, barrel ingredient portions, a tally board that counts the animals in a pen, and a few audio/UI tweaks. Every runtime feature can be switched on or off individually from an in-game settings panel, so you can run the whole bundle or just the parts you want.</p>
 <h2 class="western">What it does</h2>
 <p>&nbsp;</p>
 <p><strong>Ice-Cooled Cellars</strong></p>
@@ -49,6 +49,29 @@
 </li>
 </ul>
 <p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Animal tally board</strong></span></span></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">A slate chalkboard, hung on a wall like a painting, that keeps count of the animals in its pen. Look at it and the tooltip reads out what&rsquo;s inside the fence: each species with a breakdown by kind (Hen&nbsp;15 &middot; Rooster&nbsp;9 &middot; Chick&nbsp;3), the eggs sitting in henboxes and how many of those are fertile, and any eggs lying loose on the ground. Crafted from <strong>2 planks and 1 charcoal</strong>.</p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>It counts the pen, not a circle around itself.</strong> The board walks the ground outward the way an animal could: fences, walls, closed gates and closed doors stop it, open doorways don&rsquo;t. Coops, runs and yards joined to the pen are counted as one, so a single board covers a fence with two coops on it &mdash; and a neighbour&rsquo;s flock on the other side of the fence never lands in your total.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>It finds gaps in your fence.</strong> If that walk escapes and runs 100 blocks out, the pen isn&rsquo;t closed &mdash; the board says so in orange and counts everything within 100 blocks instead. A board that suddenly reads &ldquo;pen open&rdquo; means a gate was left open or a rail got broken.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Any animal, not just chickens</strong> &mdash; sheep, goats, pigs and everything else are grouped by species and named the way the game names them (ram, ewe, lamb; hen, rooster, pullet, cockerel, chick). Players, traders and drifters are never counted.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Birds where birds actually sit</strong> &mdash; a hen roosting in a henbox and a chicken pressed up against the fence rail both count.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Right-click it to see what it sees</strong> &mdash; a closed pen has its outline marked for 25 seconds; an open one shows the trail the count followed out, which crosses your fence line exactly at the gap. Hang the board on either face of a wall: if the walk escapes on the side it faces, the board tries the other side.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Cheap to run</strong> &mdash; the count is taken on the server every 10 seconds, and only while somebody is within 64 blocks; players are sent the totals, not the search. Several boards in one pen count on the same beat, so they always agree with each other.</p>
+</li>
+</ul>
+<p>&nbsp;</p>
 <p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Trader ledger</strong></span></span></p>
 <p style="line-height: 0.19in; margin-bottom: 0.08in;">Automatically records every trader whose Buy/Sell window you open &mdash; their location, name, type, and full buy/sell lists (prices and stock as of your last visit). Stored per-world; revisiting a trader updates their entry in place.</p>
 <ul>
@@ -80,6 +103,23 @@
 </li>
 <li>
 <p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Large Basket</strong> &mdash; 21 slots, crafted from 2&times; Basket</p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Sort by freshness (Large Storage Vessel)</strong></span></span></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">A vessel full of crocks tells you nothing about which one to open next. The <strong>Sort by freshness</strong> button under the Large Storage Vessel&rsquo;s grid lays the vessel out as a larder, in the order you should eat it:</p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Unsealed crocks first</strong>, since those spoil at the ordinary rate, then <strong>sealed crocks</strong>, then <strong>empty crocks</strong>, then everything else by item.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Within each group, whatever goes off soonest comes first</strong> &mdash; ordered by the same &ldquo;fresh for&rdquo; figure the crock&rsquo;s own tooltip shows, with the seal and the vessel&rsquo;s (or ice-chilled cellar&rsquo;s) perish rate already counted in. Rotten contents rise to the top, food that never spoils sinks to the bottom of its group.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Part-stacks are merged the game&rsquo;s own way</strong>, so perishables average their freshness instead of one stack quietly inheriting the other&rsquo;s timer.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">The sort runs <strong>on the server</strong>, for the player who has that vessel open, so it&rsquo;s safe in multiplayer. Hovering the button explains the order; the hover text has its own switch if you&rsquo;d rather not have it.</p>
 </li>
 </ul>
 <p>&nbsp;</p>
@@ -158,6 +198,8 @@
 <li>Ice-cooled cellars</li>
 <li>Material swatch tool</li>
 <li>Barrel ingredient portions</li>
+<li>Large vessel sort (and its hover text)</li>
+<li>Animal tally board</li>
 <li>Distance challenge</li>
 </ul>
 <p style="line-height: 0.19in; margin-top: 0.08in; margin-bottom: 0.08in;">Your choices are saved to <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">ModConfig/seraphsledger/features.json</span></span></span>. <strong>A restart is required</strong> for changes to take effect &mdash; these features are wired up at load time (Harmony patches, hotkeys, event handlers), so the panel warns you of this.</p>

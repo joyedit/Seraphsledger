@@ -62,6 +62,11 @@ namespace SeraphsLedger
         // on.
         public bool BarrelIngredientPortions = true;
 
+        // Animal tally board: a craftable chalkboard that counts the animals,
+        // henbox eggs and loose eggs inside the fence it hangs within. Off
+        // disables the recipe and stops placed boards from scanning.
+        public bool AnimalTally = true;
+
         // Material swatch tool: /sw mark two corners, then Ctrl+Shift+M to swap
         // one building material for another across the selection, with undo.
         // Costs nothing until used, so it ships on. Needs the controlserver

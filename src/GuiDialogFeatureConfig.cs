@@ -18,11 +18,15 @@ namespace SeraphsLedger
         // order. Adding a feature here adds a row to the dialog automatically.
         private readonly Feature[] features;
 
-        private const double DialogW = 540;
+        // Two columns of rows: one column of every feature grew taller than a
+        // 1080p screen once the list passed a dozen.
+        private const double ColW = 500;
+        private const double ColGap = 24;
+        private const double DialogW = ColW * 2 + ColGap;
         private const double RowH = 52;
         private const double SwitchSize = 28;
         private const double TextX = 42;
-        private const double TextW = DialogW - TextX;
+        private const double TextW = ColW - TextX;
 
         private struct Feature
         {
@@ -116,6 +120,13 @@ namespace SeraphsLedger
                 },
                 new Feature
                 {
+                    Title = "Animal tally board",
+                    Blurb = "Chalkboard that counts the animals and eggs inside its pen's fence.",
+                    Get = () => config.AnimalTally,
+                    Set = v => config.AnimalTally = v,
+                },
+                new Feature
+                {
                     Title = "Material swatch tool",
                     Blurb = "/sw mark two corners, Ctrl+Shift+M to restyle a build's material, with undo.",
                     Get = () => config.MaterialSwatch,
@@ -158,14 +169,17 @@ namespace SeraphsLedger
             var titleFont = CairoFont.WhiteSmallishText();
             var blurbFont = CairoFont.WhiteDetailText().WithColor(new double[] { 0.62, 0.62, 0.62, 1 });
 
+            int rowsPerCol = (features.Length + 1) / 2;
+
             for (int i = 0; i < features.Length; i++)
             {
-                double rowY = top + i * RowH;
+                double colX = (i / rowsPerCol) * (ColW + ColGap);
+                double rowY = top + (i % rowsPerCol) * RowH;
                 Feature feat = features[i]; // capture a copy for the closure
 
-                var switchBounds = ElementBounds.Fixed(0, rowY, SwitchSize, SwitchSize);
-                var titleBounds = ElementBounds.Fixed(TextX, rowY - 1, TextW, 24);
-                var blurbBounds = ElementBounds.Fixed(TextX, rowY + 22, TextW, 22);
+                var switchBounds = ElementBounds.Fixed(colX, rowY, SwitchSize, SwitchSize);
+                var titleBounds = ElementBounds.Fixed(colX + TextX, rowY - 1, TextW, 24);
+                var blurbBounds = ElementBounds.Fixed(colX + TextX, rowY + 22, TextW, 22);
 
                 composer
                     .AddSwitch(on => OnToggle(feat, on), switchBounds, "sw" + i, SwitchSize)
@@ -173,7 +187,7 @@ namespace SeraphsLedger
                     .AddStaticText(feat.Blurb, blurbFont, blurbBounds);
             }
 
-            double warnY = top + features.Length * RowH + 8;
+            double warnY = top + rowsPerCol * RowH + 8;
             var warnBounds = ElementBounds.Fixed(0, warnY, DialogW, 26);
             var warnFont = CairoFont.WhiteSmallishText().WithColor(new double[] { 1.0, 0.64, 0.26, 1 });
 
