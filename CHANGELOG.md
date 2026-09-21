@@ -2,6 +2,17 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.19.3 — 2026-09-20
+
+### Fixed
+- **Animal tally board** still called a closed pen open when hung on the
+  outside face of a wall. The 1.19.2 retry stepped to the far side of the
+  wall by negating the board's `side` variant, but that variant already
+  points from the board into the wall it hangs on, so the second walk
+  started two blocks further out on the same side and escaped exactly like
+  the first. It now steps toward the wall, and through walls up to two
+  blocks thick.
+
 ## 1.19.2 — 2026-09-20
 
 ### Fixed

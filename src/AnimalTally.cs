@@ -41,6 +41,7 @@ namespace SeraphsLedger
         // How high an animal can hop, and how far down it will step or drop.
         private const double JumpHeight = 1.05;
         private const int MaxDrop = 3;
+        private const int WallDepth = 2;
 
         private bool scanned;
         private bool penClosed;
@@ -154,12 +155,18 @@ namespace SeraphsLedger
             BlockFacing facing = BlockFacing.FromCode(Block?.Variant["side"]);
             if (facing == null) return pen;
 
-            // The board sits in front of the wall, so two steps back is the
-            // space on its other side.
-            int bx = -facing.Normali.X * 2, bz = -facing.Normali.Z * 2;
-            var behind = new PenFill(Api.World.BlockAccessor, Pos, Radius, MaxDrop, JumpHeight);
-            behind.Run(bx, bz, trackPath);
-            return behind.Closed ? behind : pen;
+            // The "side" variant points from the board into the wall it hangs
+            // on (that is where HorizontalAttachable looks for its support), so
+            // the far side lies that way: past one wall block for a fence or a
+            // plain wall, past two for a thick one.
+            for (int depth = 2; depth <= WallDepth + 1; depth++)
+            {
+                int bx = facing.Normali.X * depth, bz = facing.Normali.Z * depth;
+                var behind = new PenFill(Api.World.BlockAccessor, Pos, Radius, MaxDrop, JumpHeight);
+                behind.Run(bx, bz, trackPath);
+                if (behind.Closed) return behind;
+            }
+            return pen;
         }
 
         // Right-clicking the board marks what it can see: the pen's outline when
