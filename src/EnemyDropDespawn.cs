@@ -54,26 +54,42 @@ namespace SeraphsLedger
                 Entity e = sapi.World.GetEntityById(entityId);
                 if (e == null) return;
 
-                DropLoot(e, byPlayer);
+                // Only remove the body once its loot is safely out. If we could
+                // not roll or hand over the drops, the corpse stays and can be
+                // knife-harvested the ordinary way - deleting it would destroy
+                // the loot outright.
+                if (!DropLoot(e, byPlayer)) return;
+
                 sapi.World.DespawnEntity(e, new EntityDespawnData { Reason = EnumDespawnReason.Removed });
             }, DespawnDelayMs);
         }
 
-        private void DropLoot(Entity entity, IPlayer byPlayer)
+        // Spits the corpse's harvest loot onto the ground. Returns true when the
+        // body is safe to remove: either everything it carried is now lying on
+        // the ground, or it never had a harvest inventory to begin with. A false
+        // means the loot is still inside the corpse and the corpse must survive.
+        private bool DropLoot(Entity entity, IPlayer byPlayer)
         {
             var hb = entity.GetBehavior<EntityBehaviorHarvestable>();
-            if (hb == null) return;
+            // Nothing is stashed in a harvest inventory, so nothing is lost by
+            // removing the body; its top-level `drops` were already handled on death.
+            if (hb == null) return true;
 
             var attr = entity.Properties?.Attributes;
             bool mechanical = attr != null && attr["isMechanical"].AsBool(false);
 
-            // SetHarvested -> GenerateDrops fills the behavior's inventory. It is
-            // idempotent (guards on the "harvested"/"dropsgenerated" flags), so if
-            // the player already knife-harvested the corpse this is a no-op and the
-            // inventory is already empty. Skip non-mechanical mobs with no killer
-            // player, since GenerateDrops would NPE on the missing looter stats.
-            if (byPlayer != null || mechanical)
+            // SetHarvested -> GenerateDrops fills the behavior's inventory, guarded
+            // on the "harvested"/"dropsgenerated" flags. Once the drops exist there
+            // is nothing left to roll, and whatever the player already took by knife
+            // is simply gone from the inventory - both fine to hand over below.
+            if (!hb.DropsGenerated)
             {
+                // GenerateDrops dereferences byPlayer.Entity for non-mechanical mobs,
+                // so with no killer to scale the loot by we cannot generate it at all.
+                // Leave the corpse standing to be harvested by hand instead - this is
+                // the common case for a wolf that fell, drowned or lost a fight.
+                if (byPlayer == null && !mechanical) return false;
+
                 try
                 {
                     hb.SetHarvested(byPlayer);
@@ -81,12 +97,16 @@ namespace SeraphsLedger
                 catch (Exception ex)
                 {
                     sapi.Logger.Warning("[seraphsledger] harvest-drop failed for {0}: {1}", entity.Code, ex);
-                    return;
+                    return false;
                 }
+
+                // A silent failure leaves an empty inventory that looks just like a
+                // fully looted one; don't delete the body on the strength of it.
+                if (!hb.DropsGenerated) return false;
             }
 
             var inv = hb.Inventory;
-            if (inv == null) return;
+            if (inv == null) return false;
 
             Vec3d pos = entity.Pos.XYZ.Add(0.0, 0.25, 0.0);
             for (int i = 0; i < inv.Count; i++)
@@ -96,6 +116,7 @@ namespace SeraphsLedger
                 sapi.World.SpawnItemEntity(slot.TakeOutWhole(), pos);
                 inv.MarkSlotDirty(i);
             }
+            return true;
         }
 
         // "Enemy" == any creature whose spawn group is "hostile". This is how the

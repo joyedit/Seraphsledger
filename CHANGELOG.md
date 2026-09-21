@@ -2,6 +2,20 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.19.4 — 2026-09-20
+
+### Fixed
+- **Fast enemy despawn destroyed the loot of any hostile that died without a
+  killer.** The 2-second cleanup generated the harvest drops, spat them on the
+  ground and removed the body. But generating those drops needs the player who
+  landed the kill (the loot is scaled by their `animalLootDropRate`), so when
+  there was no such player — a wolf that fell, drowned, burned or lost a fight
+  with another predator — that step was skipped while the body was removed
+  anyway, taking every hide, scrap of meat and lump of fat with it. The same
+  hole swallowed the loot whenever drop generation threw.
+  The body is now only removed once its loot is actually on the ground.
+  Anything the cleanup cannot roll is left standing to be harvested by hand.
+
 ## 1.19.3 — 2026-09-20
 
 ### Fixed
