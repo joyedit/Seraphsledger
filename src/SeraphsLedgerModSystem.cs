@@ -308,10 +308,13 @@ namespace SeraphsLedger
 
             var cfg = SeraphsLedgerConfig.Load(api);
 
-            // Hostile creatures vanish 2s after death, dropping their harvest loot.
-            if (cfg.EnemyFastDespawn)
+            // Hostiles vanish 2s after death dropping their harvest loot, and/or
+            // every other animal is looted after a longer delay and left as a
+            // carcass. One system serves both; it does nothing unless at least
+            // one of the two is on.
+            if (cfg.EnemyFastDespawn || cfg.AutoLootAllCreatures)
             {
-                enemyDropDespawn = new EnemyDropDespawn(api);
+                enemyDropDespawn = new EnemyDropDespawn(api, cfg);
             }
 
             // Distance-challenge: track per-player travel budget and lock movement

@@ -92,6 +92,20 @@ namespace SeraphsLedger
                 },
                 new Feature
                 {
+                    Title = "Auto-loot all animals",
+                    Blurb = "Deer, sheep, pigs & co drop their loot too, leaving the carcass.",
+                    Get = () => config.AutoLootAllCreatures,
+                    Set = v => config.AutoLootAllCreatures = v,
+                },
+                new Feature
+                {
+                    Title = "Auto-loot leaves a carcass",
+                    Blurb = "Off removes the body instead - for culling a pen without carpeting it.",
+                    Get = () => config.AutoLootLeaveCarcass,
+                    Set = v => config.AutoLootLeaveCarcass = v,
+                },
+                new Feature
+                {
                     Title = "Large containers",
                     Blurb = "Recipes for the oversized trunk, chest, labeled chest, vessel & basket.",
                     Get = () => config.LargeContainers,

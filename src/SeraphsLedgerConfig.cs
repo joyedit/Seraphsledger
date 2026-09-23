@@ -34,6 +34,43 @@ namespace SeraphsLedger
         public bool LargeContainers = true;
         public bool SilencedVoices = true;
 
+        // Auto-loot for the rest of the animals: deer, sheep, pigs, hares and
+        // anything else that isn't in the "hostile" spawn group, which is all
+        // EnemyFastDespawn above ever touches.
+        //
+        // Deliberately not the same behavior as the hostile path. A drifter's
+        // body is litter, so it is deleted; a deer's is a carcass you expect to
+        // see. So this generates the harvest drops, spills them on the ground
+        // and then hands the body to the game's own EntityBehaviorDeadDecay,
+        // which leaves the carcass block the animal would have decayed into -
+        // the pile of bones you get after harvesting it by hand.
+        //
+        // Off by default: it changes how every hunt ends, and the drops land as
+        // ground items, which the game despawns on a timer. Someone who kills a
+        // moose (20+ meat) and walks away loses it, where a carcass would have
+        // kept it for days.
+        public bool AutoLootAllCreatures = false;
+
+        // Whether an auto-looted animal leaves behind the carcass block it
+        // would have decayed into. On suits hunting: you skip the butchering
+        // and the carcass still marks the kill.
+        //
+        // Turn it off before a mass cull. The carcass block is not replaceable,
+        // so DecayNow puts one at the animal's feet, tries the four horizontal
+        // neighbours if that spot is taken, and then silently places nothing -
+        // so culling a pen full of pigs carpets the floor with blocks you have
+        // to break one at a time, and loses the rest anyway.
+        //
+        // Ignored for hostiles, whose bodies are always removed outright.
+        public bool AutoLootLeaveCarcass = true;
+
+        // How long a non-hostile body lies there before it is looted, in
+        // seconds. Longer than the hostiles' fixed 2s on purpose: 2 seconds is
+        // not enough time to change your mind about a kill, and the delay is
+        // also the window in which you can still open the carcass yourself (see
+        // below). Clamped to 1..300.
+        public int AutoLootDelaySeconds = 10;
+
         // Ice-cooled cellars: enabled by default deliberately - turning it off
         // reverts cellar ice to vanilla behavior (melts by outdoor climate and
         // floods the room), so a default-off update would silently cost

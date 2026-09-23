@@ -51,6 +51,7 @@ namespace SeraphsLedger
         private int eggsLoose;
         private int henboxes;
         private Dictionary<string, int> animals = new Dictionary<string, int>();
+        private Dictionary<string, int> pregnant = new Dictionary<string, int>();
 
         private TagSetFast animalTag;
 
@@ -96,6 +97,7 @@ namespace SeraphsLedger
             penClosed = pen.Closed;
             penArea = pen.Closed ? pen.ColumnCount : 0;
             animals = new Dictionary<string, int>();
+            pregnant = new Dictionary<string, int>();
             eggsInBoxes = eggsFertile = eggsLoose = henboxes = 0;
 
             // Henboxes first: a hen sitting in one counts even when the box is
@@ -136,6 +138,16 @@ namespace SeraphsLedger
                 string code = entity.Code.ToString();
                 animals.TryGetValue(code, out int n);
                 animals[code] = n + 1;
+
+                // Pregnancy lives on the multiply behavior, which only the
+                // breeding-capable females carry, so this is null for most of
+                // what we just counted.
+                if (entity.GetBehavior<EntityBehaviorMultiply>()?.IsPregnant == true)
+                {
+                    string species = SpeciesOf(code);
+                    pregnant.TryGetValue(species, out int p);
+                    pregnant[species] = p + 1;
+                }
             }
 
             scanned = true;
@@ -175,33 +187,73 @@ namespace SeraphsLedger
         private const int HighlightSlot = 9481;
         private const int HighlightSeconds = 25;
 
+        // Each candidate costs another flood fill, so don't test the whole route.
+        private const int MaxGapCandidates = 6;
+
         public void ShowPen(IPlayer player)
         {
             if (!(player is IServerPlayer splayer)) return;
 
             PenFill pen = FillPen(true);
-            List<BlockPos> marks;
-            int color;
+            var marks = new List<BlockPos>();
+            var colors = new List<int>();
             string message;
+
+            int outlineColor = ColorUtil.ColorFromRgba(90, 220, 120, 140);
+            int gapColor = ColorUtil.ColorFromRgba(70, 70, 245, 200);
+            int trailColor = ColorUtil.ColorFromRgba(60, 130, 255, 160);
 
             if (pen.Closed)
             {
                 marks = pen.Outline(2500);
-                color = ColorUtil.ColorFromRgba(90, 220, 120, 140);
+                for (int i = 0; i < marks.Count; i++) colors.Add(outlineColor);
                 message = $"Pen closed: {pen.ColumnCount:N0} blocks, outline marked for {HighlightSeconds}s.";
             }
             else
             {
-                marks = pen.EscapeRoute ?? new List<BlockPos>();
-                color = ColorUtil.ColorFromRgba(60, 130, 255, 160);
-                BlockPos end = marks.Count > 0 ? marks[marks.Count - 1] : Pos;
-                message = marks.Count > 0
-                    ? $"Pen is open. The marked trail is the way out, leaving the pen where it crosses your fence line, and ending at {end.X}, {end.Y}, {end.Z}."
-                    : "Nowhere to stand under this board - hang it with ground beneath it.";
+                // The walk got out, so we do not know where the pen ends. Take
+                // the doorway-looking points along its route, seal each in turn,
+                // and re-walk: the first one that closes the pen is the gap, and
+                // that sealed walk is the pen the board would have counted.
+                BlockPos gap = null;
+                PenFill sealedPen = null;
+
+                foreach (BlockPos candidate in pen.GatewayCandidates(MaxGapCandidates))
+                {
+                    var trial = new PenFill(Api.World.BlockAccessor, Pos, Radius, MaxDrop, JumpHeight);
+                    trial.BlockColumn(candidate);
+                    trial.Run(0, 0, false);
+                    if (!trial.Closed) continue;
+                    gap = candidate;
+                    sealedPen = trial;
+                    break;
+                }
+
+                if (sealedPen != null)
+                {
+                    marks = sealedPen.Outline(2500);
+                    for (int i = 0; i < marks.Count; i++) colors.Add(outlineColor);
+
+                    // Last, so it draws over the outline it sits on.
+                    marks.Add(gap);
+                    colors.Add(gapColor);
+
+                    message = $"Pen is open at {gap.X}, {gap.Y}, {gap.Z} - marked in blue. "
+                            + $"Close it and the green outline is your pen ({sealedPen.ColumnCount:N0} blocks).";
+                }
+                else
+                {
+                    // No single point seals it - a whole side missing, or the
+                    // way out is wider than a doorway. Fall back to the trail.
+                    marks = pen.EscapeRoute ?? new List<BlockPos>();
+                    for (int i = 0; i < marks.Count; i++) colors.Add(trailColor);
+                    BlockPos end = marks.Count > 0 ? marks[marks.Count - 1] : Pos;
+                    message = marks.Count > 0
+                        ? $"Pen is open and no single block closes it. The marked trail is the way out, ending at {end.X}, {end.Y}, {end.Z}."
+                        : "Nowhere to stand under this board - hang it with ground beneath it.";
+                }
             }
 
-            var colors = new List<int>();
-            for (int i = 0; i < marks.Count; i++) colors.Add(color);
             Api.World.HighlightBlocks(player, HighlightSlot, marks, colors);
             splayer.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.Notification);
 
@@ -288,6 +340,9 @@ namespace SeraphsLedger
             var a = new TreeAttribute();
             foreach (var kv in animals) a.SetInt(kv.Key, kv.Value);
             t["animals"] = a;
+            var pg = new TreeAttribute();
+            foreach (var kv in pregnant) pg.SetInt(kv.Key, kv.Value);
+            t["pregnant"] = pg;
             tree["tally"] = t;
         }
 
@@ -306,6 +361,11 @@ namespace SeraphsLedger
             if (t["animals"] is ITreeAttribute a)
             {
                 foreach (var kv in a) animals[kv.Key] = a.GetInt(kv.Key);
+            }
+            pregnant = new Dictionary<string, int>();
+            if (t["pregnant"] is ITreeAttribute pg)
+            {
+                foreach (var kv in pg) pregnant[kv.Key] = pg.GetInt(kv.Key);
             }
         }
 
@@ -326,7 +386,7 @@ namespace SeraphsLedger
 
             dsc.AppendLine(penClosed
                 ? $"Pen closed ({penArea:N0} blocks)"
-                : $"<font color=\"#e0a060\">Pen open - a gap or open gate somewhere. Counting everything within {Radius} blocks.</font>");
+                : $"<font color=\"#e0a060\">Pen open (gap or gate) - counting {Radius} blocks out.</font>");
 
             if (animals.Count == 0)
             {
@@ -343,6 +403,19 @@ namespace SeraphsLedger
                 dsc.AppendLine("  " + string.Join(" · ", species
                     .OrderByDescending(kv => kv.Value)
                     .Select(kv => $"{KindName(kv.Key)} {kv.Value}")));
+            }
+
+            // One summary line rather than folding it into the per-kind
+            // breakdown: only the breeding females can be pregnant, so it would
+            // otherwise double-count them against their own kind.
+            if (pregnant.Count > 0)
+            {
+                int total = 0;
+                foreach (var kv in pregnant) total += kv.Value;
+                dsc.AppendLine($"Pregnant: {total}");
+                dsc.AppendLine("  " + string.Join(" · ", pregnant
+                    .OrderByDescending(kv => kv.Value)
+                    .Select(kv => $"{SpeciesName(kv.Key)} {kv.Value}")));
             }
 
             if (henboxes > 0 || eggsLoose > 0)
@@ -386,6 +459,17 @@ namespace SeraphsLedger
                 board.ShowPen(byPlayer);
             }
             return true;
+        }
+
+        // Only the tally itself. The default implementation also appends
+        // blockdesc-tallyboard-*, which explains how to hang the board - useful
+        // in the handbook and on the held item, just noise once it is on a wall
+        // and you are reading the count off it.
+        public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
+        {
+            var sb = new StringBuilder();
+            world.BlockAccessor.GetBlockEntity(pos)?.GetBlockInfo(forPlayer, sb);
+            return sb.ToString().TrimEnd();
         }
 
         public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
@@ -442,6 +526,16 @@ namespace SeraphsLedger
 
         private readonly HashSet<long> nests = new HashSet<long>();
         private Dictionary<long, long> parents;
+
+        // Columns the walk must treat as solid. Used to test a candidate gap:
+        // seal it and see whether the pen closes.
+        private HashSet<long> blockedColumns;
+
+        public void BlockColumn(BlockPos pos)
+        {
+            blockedColumns ??= new HashSet<long>();
+            blockedColumns.Add(Key(pos.X - origin.X, 0, pos.Z - origin.Z));
+        }
 
         // Set when a tracked fill escapes: the route from the board out.
         public List<BlockPos> EscapeRoute { get; private set; }
@@ -514,6 +608,7 @@ namespace SeraphsLedger
                     int nx = dx + DirX[d], nz = dz + DirZ[d];
                     int ny = Step(dx, y, dz, feet, d);
                     if (ny == int.MinValue) continue;
+                    if (blockedColumns != null && blockedColumns.Contains(Key(nx, 0, nz))) continue;
 
                     // Walked out to the edge of the scan area: the pen is open.
                     if (Math.Abs(nx) >= radius || Math.Abs(nz) >= radius)
@@ -552,6 +647,33 @@ namespace SeraphsLedger
             }
             route.Reverse();
             return route;
+        }
+
+        // Points along the escape route that look like a doorway: the walk
+        // threaded between two things it could not stand on, which is what a
+        // one-block hole in a fence or a gate standing open looks like from the
+        // inside. Ordered from the board outward, so the first one that seals
+        // the pen is the nearest way out.
+        public List<BlockPos> GatewayCandidates(int max)
+        {
+            var found = new List<BlockPos>();
+            List<BlockPos> route = EscapeRoute;
+            if (route == null || route.Count < 2) return found;
+
+            for (int i = 1; i < route.Count && found.Count < max; i++)
+            {
+                BlockPos prev = route[i - 1], cur = route[i];
+                int sx = Math.Sign(cur.X - prev.X), sz = Math.Sign(cur.Z - prev.Z);
+                if (sx == 0 && sz == 0) continue;
+
+                // Perpendicular to the way we came.
+                int px = sz, pz = sx;
+                int dx = cur.X - origin.X, dz = cur.Z - origin.Z;
+                bool oneSide = double.IsNaN(Feet(dx + px, cur.Y, dz + pz));
+                bool otherSide = double.IsNaN(Feet(dx - px, cur.Y, dz - pz));
+                if (oneSide && otherSide) found.Add(cur.Copy());
+            }
+            return found;
         }
 
         // Cells with a side that isn't part of the pen: the pen's outline.

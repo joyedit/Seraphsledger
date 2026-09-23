@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
@@ -7,27 +8,70 @@ using Vintagestory.GameContent;
 
 namespace SeraphsLedger
 {
-    // Fast-despawn + auto-loot for hostile creatures.
+    // Auto-loot on death, in two flavours.
     //
-    // When a creature whose spawn group is "hostile" dies (drifters, locusts,
-    // bells, shivers, bowtorn, wolves, bears, hyenas - plus any modded mob using
-    // the same spawn group), its body is removed 2 seconds later.
+    // Hostiles (EnemyFastDespawn): a creature whose spawn group is "hostile" -
+    // drifters, locusts, bells, shivers, bowtorn, wolves, bears, hyenas, plus
+    // any modded mob using the same group - has its body removed 2 seconds
+    // after death. Their bodies are litter, so nothing is left behind.
     //
-    // The catch: vanilla hostile mobs carry their loot in an
-    // EntityBehaviorHarvestable, not in their top-level `drops` (which is empty).
-    // That loot is normally only obtained by knife-harvesting the corpse, so
-    // despawning the body would silently destroy it. To make the kill self-
-    // looting, we generate the harvest drops and spit them onto the ground right
-    // before the body disappears - mirroring what a full harvest would have given.
+    // Everything else (AutoLootAllCreatures): deer, sheep, pigs, hares and the
+    // rest are looted after a longer, configurable delay and the body is then
+    // handed to the game's own EntityBehaviorDeadDecay, which puts down the
+    // carcass block the animal decays into. You get the loot without the
+    // butchering, and the carcass still appears where the animal fell. Clear
+    // AutoLootLeaveCarcass and they are removed like hostiles instead, which is
+    // what you want before culling a pen - see the config for why.
+    //
+    // The catch both paths share: vanilla mobs carry their loot in an
+    // EntityBehaviorHarvestable, not in their top-level `drops` (which is
+    // empty). That loot is normally only obtained by knife-harvesting the
+    // corpse, so disposing of the body would silently destroy it. We generate
+    // the harvest drops and spit them onto the ground first, mirroring what a
+    // full harvest would have given.
     public class EnemyDropDespawn
     {
-        private const int DespawnDelayMs = 2000;
-        private readonly ICoreServerAPI sapi;
+        private const int HostileDespawnDelayMs = 2000;
+        private const int MinDelayMs = 1000;
+        private const int MaxDelayMs = 300000;
 
-        public EnemyDropDespawn(ICoreServerAPI sapi)
+        private readonly ICoreServerAPI sapi;
+        private readonly bool fastDespawnHostiles;
+        private readonly bool autoLootEverythingElse;
+        private readonly bool leaveCarcass;
+        private readonly int autoLootDelayMs;
+        private HashSet<string> hostileFamilies;
+
+        public EnemyDropDespawn(ICoreServerAPI sapi, SeraphsLedgerConfig cfg)
         {
             this.sapi = sapi;
+            fastDespawnHostiles = cfg.EnemyFastDespawn;
+            autoLootEverythingElse = cfg.AutoLootAllCreatures;
+            leaveCarcass = cfg.AutoLootLeaveCarcass;
+            autoLootDelayMs = GameMath.Clamp(cfg.AutoLootDelaySeconds * 1000, MinDelayMs, MaxDelayMs);
+
             sapi.Event.OnEntityDeath += OnEntityDeath;
+        }
+
+        // Cubs and pups are spawned by the multiply behavior, never by world or
+        // runtime spawning, so their entity types carry no spawnConditions at
+        // all and the group test below finds nothing to read. Collect the
+        // hostile creature groups once - "wolf", "bear", "hyena", "drifter" -
+        // so a wolf pup is recognised by its family rather than by a spawn rule
+        // it was never given.
+        private HashSet<string> HostileFamilies()
+        {
+            var families = new HashSet<string>(StringComparer.Ordinal);
+            foreach (EntityProperties type in sapi.World.EntityTypes)
+            {
+                var sc = type?.Server?.SpawnConditions;
+                if (sc == null) continue;
+                if (sc.Runtime?.Group == "hostile" || sc.Worldgen?.Group == "hostile")
+                {
+                    families.Add(type.Code.Domain + ":" + type.Code.FirstCodePart());
+                }
+            }
+            return families;
         }
 
         public void Dispose()
@@ -37,7 +81,18 @@ namespace SeraphsLedger
 
         private void OnEntityDeath(Entity entity, DamageSource damageSource)
         {
-            if (!IsHostile(entity)) return;
+            if (entity == null || entity is EntityPlayer) return;
+
+            // A hostile handled by the fast-despawn path keeps the old behavior;
+            // anything else is only touched when auto-loot-everything is on.
+            bool hostile = fastDespawnHostiles && IsHostile(entity);
+            if (!hostile && !autoLootEverythingElse) return;
+
+            int delayMs = hostile ? HostileDespawnDelayMs : autoLootDelayMs;
+
+            // A hostile's body is always litter. An animal's is only removed
+            // when the player has asked for no carcasses.
+            bool removeBody = hostile || !leaveCarcass;
 
             // GenerateDrops dereferences byPlayer.Entity for non-mechanical mobs
             // (to scale loot by the looter's "animalLootDropRate" stat), so a null
@@ -54,20 +109,65 @@ namespace SeraphsLedger
                 Entity e = sapi.World.GetEntityById(entityId);
                 if (e == null) return;
 
-                // Only remove the body once its loot is safely out. If we could
-                // not roll or hand over the drops, the corpse stays and can be
-                // knife-harvested the ordinary way - deleting it would destroy
-                // the loot outright.
+                // Someone has the carcass window open: they are butchering it by
+                // hand right now. Emptying the inventory out from under an open
+                // GUI is how you get items that appear to come back, so leave
+                // this one alone entirely and let vanilla finish the job.
+                if (IsBeingLootedByHand(e)) return;
+
+                // Only dispose of the body once its loot is safely out. If we
+                // could not roll or hand over the drops, the corpse stays and
+                // can be knife-harvested the ordinary way - deleting it would
+                // destroy the loot outright.
                 if (!DropLoot(e, byPlayer)) return;
 
-                sapi.World.DespawnEntity(e, new EntityDespawnData { Reason = EnumDespawnReason.Removed });
-            }, DespawnDelayMs);
+                if (removeBody)
+                {
+                    sapi.World.DespawnEntity(e, new EntityDespawnData { Reason = EnumDespawnReason.Removed });
+                    return;
+                }
+
+                LeaveCarcass(e);
+            }, delayMs);
+        }
+
+        // Turns the emptied body into the carcass block it would have decayed
+        // into, the same way vanilla does when you close an empty carcass
+        // window. DecayNow also flags the entity for despawn, so the body goes
+        // with it.
+        private void LeaveCarcass(Entity entity)
+        {
+            var decay = entity.GetBehavior<EntityBehaviorDeadDecay>();
+            if (decay != null)
+            {
+                decay.DecayNow();
+                return;
+            }
+
+            // Nothing to decay into (mechanical mobs and some modded creatures
+            // have no deaddecay behavior). Its loot is already on the ground, so
+            // an empty body left standing is just litter.
+            sapi.World.DespawnEntity(entity, new EntityDespawnData { Reason = EnumDespawnReason.Removed });
+        }
+
+        private bool IsBeingLootedByHand(Entity entity)
+        {
+            var hb = entity.GetBehavior<EntityBehaviorHarvestable>();
+            var inv = hb?.Inventory;
+            if (inv == null) return false;
+
+            foreach (IPlayer plr in sapi.World.AllOnlinePlayers)
+            {
+                if (plr != null && inv.HasOpened(plr)) return true;
+            }
+            return false;
         }
 
         // Spits the corpse's harvest loot onto the ground. Returns true when the
-        // body is safe to remove: either everything it carried is now lying on
-        // the ground, or it never had a harvest inventory to begin with. A false
-        // means the loot is still inside the corpse and the corpse must survive.
+        // body is safe to dispose of: either everything it carried is now lying
+        // on the ground, or it never had a harvest inventory to begin with. A
+        // false means the loot is still inside the corpse and the corpse must
+        // survive.
         private bool DropLoot(Entity entity, IPlayer byPlayer)
         {
             var hb = entity.GetBehavior<EntityBehaviorHarvestable>();
@@ -87,7 +187,8 @@ namespace SeraphsLedger
                 // GenerateDrops dereferences byPlayer.Entity for non-mechanical mobs,
                 // so with no killer to scale the loot by we cannot generate it at all.
                 // Leave the corpse standing to be harvested by hand instead - this is
-                // the common case for a wolf that fell, drowned or lost a fight.
+                // the common case for an animal that fell, drowned, starved or lost a
+                // fight with a predator.
                 if (byPlayer == null && !mechanical) return false;
 
                 try
@@ -101,7 +202,7 @@ namespace SeraphsLedger
                 }
 
                 // A silent failure leaves an empty inventory that looks just like a
-                // fully looted one; don't delete the body on the strength of it.
+                // fully looted one; don't dispose of the body on the strength of it.
                 if (!hb.DropsGenerated) return false;
             }
 
@@ -122,13 +223,22 @@ namespace SeraphsLedger
         // "Enemy" == any creature whose spawn group is "hostile". This is how the
         // vanilla survival entities flag drifters/locusts/bells/shivers/bowtorn and
         // the hostile animals (wolf/bear/hyena), and modded mobs follow the same
-        // convention. Players are never hostile-group, but guard anyway.
-        private static bool IsHostile(Entity entity)
+        // convention.
+        private bool IsHostile(Entity entity)
         {
-            if (entity == null || entity is EntityPlayer) return false;
             var sc = entity.Properties?.Server?.SpawnConditions;
-            if (sc == null) return false;
-            return sc.Runtime?.Group == "hostile" || sc.Worldgen?.Group == "hostile";
+            if (sc != null && (sc.Runtime?.Group == "hostile" || sc.Worldgen?.Group == "hostile"))
+            {
+                return true;
+            }
+
+            // No spawn rule of its own: fall back to the family. Built lazily
+            // because entity types are not all registered when this class is
+            // constructed.
+            hostileFamilies ??= HostileFamilies();
+            AssetLocation code = entity.Code;
+            return code != null
+                   && hostileFamilies.Contains(code.Domain + ":" + code.FirstCodePart());
         }
     }
 }

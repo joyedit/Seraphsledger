@@ -2,6 +2,77 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.21.1 — 2026-09-22
+
+### Changed
+- **The tally board's tooltip is just the tally now.** It was repeating the
+  "hang it inside a pen..." instructions under every count. That text still
+  appears on the held item and in the handbook, where it is actually useful.
+- **"Pen open" fits on one line**, so the tooltip stops reflowing to two.
+
+### Fixed
+- **Right-clicking an open pen now shows the pen and the gap**, rather than a
+  trail wandering off into the distance. The walk can't know where an open pen
+  ends, so the board takes the doorway-looking points along its escape route -
+  places where the walk threaded between two blocks it couldn't stand on -
+  seals each in turn and re-walks. The first one that closes the pen is the way
+  out: it is marked in blue, and the green outline around it is the pen you'd
+  have if you shut it. Falls back to the old trail when no single block closes
+  the pen, which means a whole side is missing or the gap is wider than a
+  doorway.
+
+## 1.21.0 — 2026-09-22
+
+### Added
+- **The tally board counts pregnant animals.** A "Pregnant" line under the
+  species breakdown, with a per-species split. It's a separate line rather
+  than part of the per-kind breakdown, because only the breeding females can
+  be pregnant and folding it in would double-count them against their own
+  kind.
+
+### Fixed
+- **Wolf and hyena pups were never auto-looted.** Auto-loot recognised a
+  hostile by its spawn group, but cubs and pups are spawned by the multiply
+  behaviour rather than by world or runtime spawning, so their entity types
+  carry no `spawnConditions` at all and the test found nothing to read —
+  their bodies just stayed where they fell while every adult vanished. The
+  hostile groups are now collected once from the entity registry, so a pup
+  is recognised by its family ("wolf", "bear", "hyena", "drifter") instead of
+  by a spawn rule it was never given.
+
+## 1.20.1 — 2026-09-22
+
+### Added
+- **Auto-loot leaves a carcass** (on by default), so a mass cull doesn't bury
+  the pen. The carcass block isn't replaceable, so dead-decay drops one at the
+  animal's feet, tries the four horizontal neighbours if that spot is taken,
+  and then silently places nothing — culling a pen of two hundred pigs carpets
+  the floor with blocks to break one at a time and loses the overflow anyway.
+  Turn it off and auto-looted animals are removed like hostiles: loot on the
+  ground, no block. Hostiles ignore the setting; their bodies always go.
+
+## 1.20.0 — 2026-09-21
+
+### Added
+- **Auto-loot all animals** (off by default). Until now the death auto-loot
+  only touched creatures in the "hostile" spawn group — drifters, locusts,
+  bells, wolves, bears, hyenas — and left deer, sheep, pigs, hares and the
+  rest to be butchered by hand. Turn this on and every animal you kill
+  drops its harvest loot on the ground.
+  - **The body is not deleted.** A drifter's corpse is litter and is still
+    removed outright, but an animal's is handed to the game's own dead-decay
+    behaviour, so it leaves the carcass block it would have decayed into —
+    the pile of bones you get after harvesting it by hand.
+  - The delay is configurable (`AutoLootDelaySeconds`, default 10, clamped
+    to 1–300) rather than the hostiles' fixed 2 seconds, because 2 seconds
+    is not long enough to change your mind about a kill.
+  - **Opening the carcass yourself wins.** If anyone has the carcass window
+    open when the timer fires, auto-loot skips that body completely and
+    leaves it to vanilla. Emptying an inventory out from under an open GUI
+    is exactly how you get items that look like they come back.
+  - An animal that died without a killer — fell, drowned, starved, or lost a
+    fight with a predator — is left alone, for the reason given in 1.19.4.
+
 ## 1.19.4 — 2026-09-20
 
 ### Fixed
