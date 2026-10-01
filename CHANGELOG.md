@@ -2,6 +2,121 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.24.1 — 2026-09-30
+
+### Added
+- **The large vessel's freshness sort now lays out all of the food, not just the
+  crocks.** Fruit, vegetables, eggs, grain, flour, bread, cheese, meat and a
+  bowl of a meal now follow the crocks in one queue, soonest to spoil first,
+  ordered by the same "fresh for" time their own tooltips show — so the whole
+  grid reads in the order you would eat it, not just its first row. Behind that
+  queue go the foods that keep, and behind those everything else by item, as
+  before.
+  - **The foods that keep** are what can be eaten as it is with no spoil time on
+    it, like honeycomb, and what food is made with, like salt. Salt is taken
+    from the barrel recipes that make food rather than named in the code, so a
+    mod's own curing agents and seasonings land with the food too, while
+    quicklime and tanning bark stay out of it.
+  - A bowl or a pot of a meal is read like a crock is, then queues with the
+    loose food rather than with the crocks: a crock is a larder, a bowl is a
+    portion.
+  - A sort is now purely a look at the food. The "fresh for" figure comes from
+    the engine's own transition update, which is a write as well as a read, so
+    every reading is taken off a copy and the food in the vessel is left for the
+    vessel to tick — the same decay, at the same rate, a few seconds later.
+    (Nothing spoiled faster for this before: the sort only ever applied what the
+    vessel's own ten-second tick was about to apply anyway.)
+
+## 1.23.0 — 2026-09-26
+
+### Added
+- **Move all of one item.** Hold **Shift and press the middle mouse button** on
+  a slot and every stack of that same item leaves that inventory — all your
+  flax, none of your ore. It rides the engine's own shift-click transfer, so
+  each stack lands exactly where shift-clicking it would have put it: into the
+  open container from your pack, back into your pack from the container.
+  - **Rebindable** under *Settings → Controls → Inventory hotkeys* as "Move all
+    of one item". Any mouse button, with or without Ctrl/Shift/Alt — or a plain
+    key, which acts on whichever slot the mouse is hovering.
+  - Unlike Ctrl + left-click move-all it needs no container open; with just your
+    inventory up it gathers an item between hotbar and backpack.
+  - It matches the item, not the stack, so durability and freshness are ignored
+    — a mixed-wear pile of copper axes moves as one.
+  - Clicking an empty slot still does the ordinary thing, since an empty slot
+    names no item to match.
+- A switch for it in the settings panel (Ctrl+Shift+L), beside Ctrl + click
+  move-all.
+
+### Fixed
+- **The tally board's breakdown line no longer runs off the edge of the
+  tooltip** (`Hen 18 · Rooster 14 · Pullet 2 · Cockerel 1` was losing its last
+  character). The breakdown lines were indented with spaces, and the block-info
+  box sizes itself to the widest line using ink extents — which leave leading
+  spaces out of the width but still draw them, so an indented line overhangs by
+  exactly its indent. They're dimmed instead of indented now, which reads the
+  same and measures honestly.
+- **Binding a tally board to a marked region now puts the marks out.** The
+  corner pillars and the violet box stayed lit over the pen after `sneak +
+  right-click` bound them, until you thought to run `/tally clear` — which read
+  as the binding not having taken. The corners are forgotten the moment a board
+  takes the box.
+- **The tally board counts eggs laid on the floor.** A hen with no henbox free
+  lays where she stands, and that lands as a *block* rather than a dropped
+  item — so the board kept reporting `0 loose` with eggs plainly sitting on
+  the floorboards. Floor eggs now count, singly or in piles of two and three;
+  a broken one counts for nothing, being a mess rather than an egg.
+- **A marked region now reaches the ground under its footprint.** Two corners
+  marked at the same height grew the box upward to whatever stood in the
+  footprint, but pinned its floor at the height you happened to be standing —
+  so marking a pen from the wall top, or from the barn floor above it, left the
+  animals down in the pen outside the box and the board saying `No animals`. A
+  henbox up at marking height still counted, which made it look like the region
+  was being ignored rather than floating above the pen. The floor now drops to
+  the lowest ground in the footprint, up to 16 blocks below where you marked.
+  Corners at different heights are still taken literally, for a loft or a
+  stacked coop.
+  - **Boards already bound keep their old box** — re-mark and re-bind to pick
+    up the new floor.
+- **The region's height is now on the label.** `Region: 22 x 37, Y 173-183`
+  instead of `22 x 7 x 37`, in the tooltip and in the `/tally mark` reply: when
+  a board counts nothing, where the box's floor sits is the first thing worth
+  seeing.
+
+## 1.22.1 — 2026-09-22
+
+### Added
+- **Marked corners glow.** `/tally mark` now lights the block you marked as a
+  pillar — green for the first corner, amber for the second — and once both
+  are set the box they describe is outlined in violet, so you can see what
+  you're about to bind before you bind it. Same shapes the swatch tool uses,
+  so a marked pen reads like a marked build. `/tally clear` puts them out.
+- **Ctrl+Shift+X while looking at a tally board** outlines what it counts,
+  without having to right-click it. Rebindable under Controls as "Show tally
+  board region". Bound boards show the region, unbound ones show the pen walk
+  exactly as right-click does, and it clears itself after 25 seconds.
+
+## 1.22.0 — 2026-09-22
+
+### Added
+- **The tally board can count a region you mark, instead of working the pen
+  out for itself.** `/tally mark` a corner, `/tally mark` the opposite one,
+  then sneak + right-click a board to bind it. Sneak + right-click again
+  clears it and the board goes back to walking the fence.
+  - The walk has to guess where a pen ends, and says so when it can't — a
+    gate standing open or a doorway two blocks wide is enough. A marked
+    region is simply told, so it counts the same animals every time.
+  - Mark **two corners at the same height** and the top rises to whatever
+    stands in the footprint, so you walk the corners of a pen at ground level
+    rather than flying up to the fence tops. Corners at different heights are
+    taken literally, for a loft or a stacked coop.
+  - The tooltip shows `Region: 41 x 12 x 26 (marked)` in place of the
+    open/closed line, and right-click outlines the region's footprint.
+  - It counts a box, so it is honest rather than clever: an L-shaped pen will
+    include the notch outside the fence, and a region that overhangs a wall
+    will count what's on the other side. Leave a board unbound for the walk.
+  - Cheaper than the walk, too: a box test per entity instead of a flood
+    fill every ten seconds.
+
 ## 1.21.1 — 2026-09-22
 
 ### Changed

@@ -24,6 +24,17 @@ namespace SeraphsLedger
     [ProtoContract]
     public class TrashCursorPacket { }
 
+    // Sent client -> server when the player presses the show-region hotkey while
+    // looking at a tally board. Carries the board so the server doesn't have to
+    // guess what the player was aiming at.
+    [ProtoContract]
+    public class ShowTallyRegionPacket
+    {
+        [ProtoMember(1)] public int X;
+        [ProtoMember(2)] public int Y;
+        [ProtoMember(3)] public int Z;
+    }
+
     public class SeraphsLedgerModSystem : ModSystem
     {
         public const string NetworkChannelName = "seraphsledger";
@@ -52,7 +63,8 @@ namespace SeraphsLedger
             api.Network.RegisterChannel(NetworkChannelName)
                 .RegisterMessageType<SortBackpackPacket>()
                 .RegisterMessageType<TrashCursorPacket>()
-                .RegisterMessageType<SortVesselPacket>();
+                .RegisterMessageType<SortVesselPacket>()
+                .RegisterMessageType<ShowTallyRegionPacket>();
 
             // Ice-cooled cellars run on both sides: the server applies the
             // reduced perish rate to stored food, the client shows it in the
@@ -177,11 +189,27 @@ namespace SeraphsLedger
             api.Input.RegisterHotKey("seraphsledgerconfig", "Seraph's Ledger settings", GlKeys.L,
                 HotkeyType.GUIOrOtherControls, altPressed: false, ctrlPressed: true, shiftPressed: true);
             api.Input.SetHotKeyHandler("seraphsledgerconfig", _ => ToggleConfigGui());
+
+            // Show a tally board's marked region without having to click it.
+            // Rebindable like any other hotkey, under Controls.
+            api.Input.RegisterHotKey("seraphsledgertallyregion", "Show tally board region", GlKeys.X,
+                HotkeyType.GUIOrOtherControls, altPressed: false, ctrlPressed: true, shiftPressed: true);
+            api.Input.SetHotKeyHandler("seraphsledgertallyregion", _ => ShowTallyRegion());
             api.ChatCommands.Create("slconfig")
                 .WithDescription("Open The Seraph's Ledger settings (toggle features on/off)")
                 .HandleWith(_ => { ToggleConfigGui(); return TextCommandResult.Success(); });
 
             var cfg = SeraphsLedgerConfig.Load(api);
+
+            // Move-all / move-matching. The move-matching binding is a real
+            // hotkey so the player can rebind it under Controls > Inventory
+            // hotkeys; the click itself is served by a Harmony prefix below,
+            // because a click on a slot is consumed by the dialog before the
+            // hotkey system ever sees which slot it landed on.
+            MoveAll.Init(api);
+            MoveAll.MoveAllEnabled = cfg.CtrlClickMoveAll;
+            MoveAll.MoveMatchingEnabled = cfg.MoveMatchingItems;
+            if (cfg.MoveMatchingItems) MoveAll.RegisterHotkey(api);
 
             // Each feature is a load-time Harmony patch, so apply only the enabled
             // ones; toggling one off in the settings dialog takes effect on restart.
@@ -189,15 +217,16 @@ namespace SeraphsLedger
             {
                 harmony = new Harmony(HarmonyId);
 
-                // Ctrl + left-click move-all (patched manually, not via PatchAll, so
-                // it can be gated independently of the other patches).
-                if (cfg.CtrlClickMoveAll)
+                // The two bulk moves out of an inventory grid share one prefix
+                // (see MoveAll), patched manually rather than via PatchAll so it
+                // can be gated independently of the other patches.
+                if (cfg.CtrlClickMoveAll || cfg.MoveMatchingItems)
                 {
                     var onMouseDown = AccessTools.Method(typeof(GuiElementItemSlotGridBase), "OnMouseDownOnElement");
                     if (onMouseDown != null)
                     {
                         harmony.Patch(onMouseDown, prefix: new HarmonyMethod(
-                            AccessTools.Method(typeof(OnMouseDownCtrlMoveAllPatch), nameof(OnMouseDownCtrlMoveAllPatch.Prefix))));
+                            AccessTools.Method(typeof(OnMouseDownMoveAllPatch), nameof(OnMouseDownMoveAllPatch.Prefix))));
                     }
                 }
 
@@ -286,6 +315,22 @@ namespace SeraphsLedger
 
         }
 
+        // Asks the server to light up the board the player is looking at. The
+        // highlight itself is server-issued, same as right-clicking the board.
+        private bool ShowTallyRegion()
+        {
+            BlockSelection sel = capi?.World?.Player?.CurrentBlockSelection;
+            if (sel?.Position == null) return false;
+
+            ClientChannel?.SendPacket(new ShowTallyRegionPacket
+            {
+                X = sel.Position.X,
+                Y = sel.Position.Y,
+                Z = sel.Position.Z
+            });
+            return true;
+        }
+
         private bool ToggleConfigGui()
         {
             if (configDialog == null) configDialog = new GuiDialogFeatureConfig(capi);
@@ -304,9 +349,26 @@ namespace SeraphsLedger
             api.Network.GetChannel(NetworkChannelName)
                 .SetMessageHandler<SortBackpackPacket>(OnSortBackpack)
                 .SetMessageHandler<TrashCursorPacket>(OnTrashCursor)
-                .SetMessageHandler<SortVesselPacket>(VesselSorter.OnSortPacket);
+                .SetMessageHandler<SortVesselPacket>(VesselSorter.OnSortPacket)
+                .SetMessageHandler<ShowTallyRegionPacket>(OnShowTallyRegion);
 
             var cfg = SeraphsLedgerConfig.Load(api);
+
+            // Corner marking for the tally board's optional counting region.
+            if (cfg.AnimalTally)
+            {
+                api.ChatCommands.Create("tally")
+                    .WithDescription("Mark a pen for an Animal Tally Board to count")
+                    .RequiresPrivilege(Privilege.chat)
+                    .BeginSubCommand("mark")
+                        .WithDescription("Mark a corner of the pen (aim at a block). Two opposite corners define it")
+                        .HandleWith(OnTallyMark)
+                    .EndSubCommand()
+                    .BeginSubCommand("clear")
+                        .WithDescription("Forget the corners you marked")
+                        .HandleWith(OnTallyClear)
+                    .EndSubCommand();
+            }
 
             // Hostiles vanish 2s after death dropping their harvest loot, and/or
             // every other animal is looted after a longer delay and left as a
@@ -323,6 +385,63 @@ namespace SeraphsLedger
             {
                 stepCountdown = new StepCountdown(api, cfg.StepCountdownStartMeters);
             }
+        }
+
+        private void OnShowTallyRegion(IServerPlayer player, ShowTallyRegionPacket packet)
+        {
+            var pos = new BlockPos(packet.X, packet.Y, packet.Z);
+
+            // Don't let a crafted packet light up arbitrary blocks from across
+            // the map: it has to be a board, and one the player could reach.
+            if (player?.Entity == null) return;
+            if (player.Entity.Pos.AsBlockPos.DistanceTo(pos) > 16) return;
+            if (sapi.World.BlockAccessor.GetBlockEntity(pos) is BlockEntityTallyBoard board)
+            {
+                board.ShowPen(player);
+            }
+        }
+
+        private TextCommandResult OnTallyMark(TextCommandCallingArgs args)
+        {
+            if (!(args.Caller.Player is IServerPlayer player))
+            {
+                return TextCommandResult.Error("Only a player can mark a pen.");
+            }
+
+            // Aiming at nothing marks the block you are standing on, so you can
+            // walk the corners of a pen rather than having to find a block to
+            // look at.
+            BlockPos pos = player.CurrentBlockSelection?.Position
+                           ?? player.Entity.Pos.AsBlockPos.DownCopy();
+
+            int corner = TallyMarks.Mark(player.PlayerUID, pos);
+            TallyMarks.UpdateHighlight(sapi, player);
+            if (corner == 1)
+            {
+                return TextCommandResult.Success(
+                    $"Corner 1 marked at {pos.X}, {pos.Y}, {pos.Z}. Aim at the opposite corner and /tally mark again.");
+            }
+
+            if (!TallyMarks.TryGetBox(args.Caller.Entity.World, player.PlayerUID,
+                                      out BlockPos min, out BlockPos max, out string error))
+            {
+                return TextCommandResult.Error(error);
+            }
+
+            string size = $"{max.X - min.X + 1} x {max.Z - min.Z + 1}, Y {min.Y}-{max.Y}";
+            return TextCommandResult.Success(
+                $"Corner 2 marked. Region {size}. Now sneak + right-click an Animal Tally Board to bind it.");
+        }
+
+        private TextCommandResult OnTallyClear(TextCommandCallingArgs args)
+        {
+            if (!(args.Caller.Player is IServerPlayer player))
+            {
+                return TextCommandResult.Error("Only a player can mark a pen.");
+            }
+            TallyMarks.Clear(player.PlayerUID);
+            TallyMarks.UpdateHighlight(sapi, player);
+            return TextCommandResult.Success("Corners forgotten. Boards already bound keep their region.");
         }
 
         private void OnSortBackpack(IServerPlayer player, SortBackpackPacket packet)
@@ -355,6 +474,7 @@ namespace SeraphsLedger
             barrelHarmony?.UnpatchAll(BarrelHarmonyId);
             barrelHarmony = null;
             ClientChannel = null;
+            MoveAll.Shutdown();
             configDialog = null;
             enemyDropDespawn?.Dispose();
             enemyDropDespawn = null;
@@ -570,108 +690,5 @@ namespace SeraphsLedger
     public static class VoiceSilencePatch
     {
         public static bool Prefix() => false;
-    }
-
-    // Ctrl + left-click on any slot in an inventory dialog dumps every non-empty
-    // slot in that grid's inventory into the open container(s) using the engine's
-    // own shift+click transfer pipeline (TryTransferAway via ActivateSlot).
-    //
-    // Patched at OnMouseDownOnElement rather than SlotClick because the outer
-    // method reads inventory[keyAtIndex] after the click; player backpack
-    // inventories (InventoryPlayerBackpacks) shrink when a worn bag is removed,
-    // and its indexer returns null past Count -> NPE on cleanup. By patching the
-    // outer method and short-circuiting, we skip that cleanup entirely.
-    //
-    // Patched manually (not via a [HarmonyPatch] attribute + PatchAll) so it can be
-    // gated by the CtrlClickMoveAll config switch independently of the others.
-    public static class OnMouseDownCtrlMoveAllPatch
-    {
-        private static readonly FieldInfo InventoryField =
-            AccessTools.Field(typeof(GuiElementItemSlotGridBase), "inventory");
-        private static readonly FieldInfo SendPacketHandlerField =
-            AccessTools.Field(typeof(GuiElementItemSlotGridBase), "SendPacketHandler");
-
-        public static bool Prefix(
-            GuiElementItemSlotGridBase __instance,
-            ICoreClientAPI api,
-            MouseEvent args)
-        {
-            if (args.Button != EnumMouseButton.Left) return true;
-
-            bool ctrl  = api.Input.KeyboardKeyState[3];
-            bool shift = api.Input.KeyboardKeyState[1] || api.Input.KeyboardKeyState[2];
-            bool alt   = api.Input.KeyboardKeyState[5];
-            if (!ctrl || shift || alt) return true;
-
-            if (!__instance.Bounds.ParentBounds.PointInside(args.X, args.Y)) return true;
-
-            // Make sure the click actually landed on a rendered slot.
-            bool hitSlot = false;
-            var bounds = __instance.SlotBounds;
-            var rendered = __instance.renderedSlots;
-            int n = Math.Min(bounds?.Length ?? 0, rendered?.Count ?? 0);
-            for (int i = 0; i < n; i++)
-            {
-                if (bounds[i].PointInside(args.X, args.Y)) { hitSlot = true; break; }
-            }
-            if (!hitSlot) return true;
-
-            IInventory inv = InventoryField?.GetValue(__instance) as IInventory;
-            if (inv == null) return true;
-
-            // Only act when at least one non-player inventory (chest/trunk/etc.)
-            // is open, so this is a no-op in the bare E-key player inventory.
-            bool hasContainer = false;
-            foreach (var oi in api.World.Player.InventoryManager.OpenedInventories)
-            {
-                if (oi != null && !(oi is InventoryBasePlayer))
-                {
-                    hasContainer = true;
-                    break;
-                }
-            }
-            if (!hasContainer) return true;
-
-            var sendHandler = SendPacketHandlerField?.GetValue(__instance) as Action<object>;
-
-            // Snapshot slot references up-front; slot IDs may shift if a worn bag
-            // is removed mid-iteration, but the slot objects themselves remain
-            // valid for emptiness checks.
-            List<ItemSlot> targets = new List<ItemSlot>();
-            foreach (ItemSlot s in inv)
-            {
-                if (s == null || s.Empty) continue;
-                if (s is ItemSlotBackpack) continue; // don't pull bags off the player
-                targets.Add(s);
-            }
-
-            foreach (var sslot in targets)
-            {
-                if (sslot.Empty) continue;
-                int sid = inv.GetSlotId(sslot);
-                if (sid < 0) continue;
-
-                var op = new ItemStackMoveOperation(
-                    api.World, EnumMouseButton.Left,
-                    EnumModifierKey.SHIFT, EnumMergePriority.AutoMerge);
-                op.ActingPlayer = api.World.Player;
-                op.RequestedQuantity = sslot.StackSize;
-
-                object packets = inv.ActivateSlot(sid, sslot, ref op);
-                if (packets == null || sendHandler == null) continue;
-
-                if (packets is object[] arr)
-                {
-                    foreach (var p in arr) sendHandler(p);
-                }
-                else
-                {
-                    sendHandler(packets);
-                }
-            }
-
-            args.Handled = true;
-            return false;
-        }
     }
 }

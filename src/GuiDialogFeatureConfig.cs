@@ -57,6 +57,13 @@ namespace SeraphsLedger
                 },
                 new Feature
                 {
+                    Title = "Move all of one item",
+                    Blurb = "Shift + middle mouse on a slot moves every stack of that item. Rebindable.",
+                    Get = () => config.MoveMatchingItems,
+                    Set = v => config.MoveMatchingItems = v,
+                },
+                new Feature
+                {
                     Title = "Sort & Trash buttons",
                     Blurb = "Adds Sort and Trash buttons to your player inventory.",
                     Get = () => config.SortTrashButtons,
@@ -65,7 +72,7 @@ namespace SeraphsLedger
                 new Feature
                 {
                     Title = "Large vessel sort",
-                    Blurb = "Sort by freshness on large vessels: crocks first, soonest to spoil first.",
+                    Blurb = "Sort by freshness on large vessels: crocks first, then all food, soonest to spoil first.",
                     Get = () => config.LargeVesselSort,
                     Set = v => config.LargeVesselSort = v,
                 },

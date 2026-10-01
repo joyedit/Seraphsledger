@@ -53,6 +53,14 @@ namespace SeraphsLedger
         private Dictionary<string, int> animals = new Dictionary<string, int>();
         private Dictionary<string, int> pregnant = new Dictionary<string, int>();
 
+        // When set, the board counts this box instead of walking the fence. The
+        // walk has to guess where a pen ends and says so when it can't; a marked
+        // region is simply told.
+        private BlockPos regionMin;
+        private BlockPos regionMax;
+
+        public bool HasRegion => regionMin != null && regionMax != null;
+
         private TagSetFast animalTag;
 
         public override void Initialize(ICoreAPI api)
@@ -92,29 +100,108 @@ namespace SeraphsLedger
 
         private void Scan()
         {
-            PenFill pen = FillPen(false);
-
-            penClosed = pen.Closed;
-            penArea = pen.Closed ? pen.ColumnCount : 0;
             animals = new Dictionary<string, int>();
             pregnant = new Dictionary<string, int>();
             eggsInBoxes = eggsFertile = eggsLoose = henboxes = 0;
 
-            // Henboxes first: a hen sitting in one counts even when the box is
-            // out of the walk's reach (a stacked row, a raised shelf).
-            foreach (BlockEntityHenBox box in HenboxesInRange())
+            if (HasRegion) ScanRegion();
+            else ScanWalk();
+
+            scanned = true;
+            MarkDirty();
+        }
+
+        // Everything inside the marked box, no walking and no guessing.
+        private void ScanRegion()
+        {
+            penClosed = true;
+            penArea = 0;
+
+            foreach (BlockEntity be in BlockEntitiesInRange())
             {
-                if (pen.Closed && !pen.TouchesBlock(box.Pos)) continue;
-                henboxes++;
-                pen.AddNest(box.Pos);
-                InventoryBase inv = box.Inventory;
-                for (int i = 0; i < inv.Count; i++)
+                if (!InRegion(be.Pos)) continue;
+
+                if (be is BlockEntityHenBox box)
                 {
-                    ItemStack egg = inv[i].Itemstack;
-                    if (egg == null) continue;
-                    eggsInBoxes += egg.StackSize;
-                    if (egg.Attributes["chick"] != null) eggsFertile += egg.StackSize;
+                    henboxes++;
+                    CountEggsIn(box);
                 }
+                else eggsLoose += EggBlockCount(be.Block);
+            }
+
+            BlockPos to = regionMax.AddCopy(1, 1, 1);
+            foreach (Entity entity in Api.World.GetEntitiesInsideCuboid(regionMin, to))
+            {
+                CountEntity(entity);
+            }
+        }
+
+        private bool InRegion(BlockPos pos) =>
+            pos.X >= regionMin.X && pos.X <= regionMax.X
+            && pos.Y >= regionMin.Y && pos.Y <= regionMax.Y
+            && pos.Z >= regionMin.Z && pos.Z <= regionMax.Z;
+
+        private void CountEggsIn(BlockEntityHenBox box)
+        {
+            InventoryBase inv = box.Inventory;
+            for (int i = 0; i < inv.Count; i++)
+            {
+                ItemStack egg = inv[i].Itemstack;
+                if (egg == null) continue;
+                eggsInBoxes += egg.StackSize;
+                if (egg.Attributes["chick"] != null) eggsFertile += egg.StackSize;
+            }
+        }
+
+        // Classifies one entity into the tallies. Both the walk and the region
+        // funnel through here so the two modes always agree on what counts.
+        private void CountEntity(Entity entity)
+        {
+            if (entity is EntityItem item)
+            {
+                if (IsEgg(item.Itemstack)) eggsLoose += item.Itemstack.StackSize;
+                return;
+            }
+
+            if (entity is EntityPlayer || !entity.Alive || !(entity is EntityAgent)) return;
+            if (!entity.Tags.Overlaps(animalTag)) return;
+
+            string code = entity.Code.ToString();
+            animals.TryGetValue(code, out int n);
+            animals[code] = n + 1;
+
+            // Pregnancy lives on the multiply behavior, which only the
+            // breeding-capable females carry, so this is null for most of
+            // what we just counted.
+            if (entity.GetBehavior<EntityBehaviorMultiply>()?.IsPregnant == true)
+            {
+                string species = SpeciesOf(code);
+                pregnant.TryGetValue(species, out int p);
+                pregnant[species] = p + 1;
+            }
+        }
+
+        private void ScanWalk()
+        {
+            PenFill pen = FillPen(false);
+
+            penClosed = pen.Closed;
+            penArea = pen.Closed ? pen.ColumnCount : 0;
+
+            // Henboxes first: a hen sitting in one counts even when the box is
+            // out of the walk's reach (a stacked row, a raised shelf). Eggs laid
+            // on the floor ride along in the same pass over the block entities.
+            foreach (BlockEntity be in BlockEntitiesInRange())
+            {
+                if (pen.Closed && !pen.TouchesBlock(be.Pos)) continue;
+
+                if (be is BlockEntityHenBox box)
+                {
+                    henboxes++;
+                    pen.AddNest(box.Pos);
+                    CountEggsIn(box);
+                }
+                else eggsLoose += EggBlockCount(be.Block);
             }
 
             Vec3d min = new Vec3d(Pos.X - Radius, Pos.Y - VerticalRange, Pos.Z - Radius);
@@ -125,33 +212,8 @@ namespace SeraphsLedger
                          new BlockPos((int)max.X, (int)max.Y, (int)max.Z)))
             {
                 if (!InPen(pen, entity.Pos.XYZ)) continue;
-
-                if (entity is EntityItem item)
-                {
-                    if (IsEgg(item.Itemstack)) eggsLoose += item.Itemstack.StackSize;
-                    continue;
-                }
-
-                if (entity is EntityPlayer || !entity.Alive || !(entity is EntityAgent)) continue;
-                if (!entity.Tags.Overlaps(animalTag)) continue;
-
-                string code = entity.Code.ToString();
-                animals.TryGetValue(code, out int n);
-                animals[code] = n + 1;
-
-                // Pregnancy lives on the multiply behavior, which only the
-                // breeding-capable females carry, so this is null for most of
-                // what we just counted.
-                if (entity.GetBehavior<EntityBehaviorMultiply>()?.IsPregnant == true)
-                {
-                    string species = SpeciesOf(code);
-                    pregnant.TryGetValue(species, out int p);
-                    pregnant[species] = p + 1;
-                }
+                CountEntity(entity);
             }
-
-            scanned = true;
-            MarkDirty();
         }
 
         // A board hung on the outside face of a wall would otherwise start its
@@ -194,7 +256,6 @@ namespace SeraphsLedger
         {
             if (!(player is IServerPlayer splayer)) return;
 
-            PenFill pen = FillPen(true);
             var marks = new List<BlockPos>();
             var colors = new List<int>();
             string message;
@@ -202,6 +263,22 @@ namespace SeraphsLedger
             int outlineColor = ColorUtil.ColorFromRgba(90, 220, 120, 140);
             int gapColor = ColorUtil.ColorFromRgba(70, 70, 245, 200);
             int trailColor = ColorUtil.ColorFromRgba(60, 130, 255, 160);
+
+            if (HasRegion)
+            {
+                marks = RegionOutline();
+                for (int i = 0; i < marks.Count; i++) colors.Add(outlineColor);
+                Api.World.HighlightBlocks(player, HighlightSlot, marks, colors);
+                splayer.SendMessage(GlobalConstants.GeneralChatGroup,
+                    $"Region {RegionSize()}, outline marked for {HighlightSeconds}s. Sneak + right-click to clear it.",
+                    EnumChatType.Notification);
+                RegisterDelayedCallback(
+                    _ => Api.World.HighlightBlocks(player, HighlightSlot, new List<BlockPos>()),
+                    HighlightSeconds * 1000);
+                return;
+            }
+
+            PenFill pen = FillPen(true);
 
             if (pen.Closed)
             {
@@ -296,6 +373,20 @@ namespace SeraphsLedger
             return pen.Holds(dx, y, dz) || pen.Holds(dx, y - 1, dz) || pen.Holds(dx, y - 2, dz);
         }
 
+        // A hen with no henbox free lays on the floor, and that lands as a
+        // block (egg-chicken-1/2/3), not as a dropped item - so it never
+        // reached the loose count, which only ever looked at item entities.
+        // The last code part is how many eggs are in the pile; "broken" is a
+        // mess on the floorboards rather than an egg, and counts for nothing.
+        private static int EggBlockCount(Block block)
+        {
+            string path = block?.Code?.Path;
+            if (path == null || !path.StartsWith("egg-", StringComparison.Ordinal)) return 0;
+
+            int dash = path.LastIndexOf('-');
+            return dash >= 0 && int.TryParse(path.Substring(dash + 1), out int n) ? n : 0;
+        }
+
         private static bool IsEgg(ItemStack stack)
         {
             string path = stack?.Collectible?.Code?.Path;
@@ -304,7 +395,9 @@ namespace SeraphsLedger
 
         // Block entities are indexed per chunk, so walking the chunks around the
         // board is far cheaper than probing every block in the radius.
-        private IEnumerable<BlockEntityHenBox> HenboxesInRange()
+        // Every block entity within the board's reach, in one pass over the
+        // chunks - henboxes and floor-laid eggs both come out of here.
+        private IEnumerable<BlockEntity> BlockEntitiesInRange()
         {
             IBlockAccessor ba = Api.World.BlockAccessor;
             int size = GlobalConstants.ChunkSize;
@@ -316,15 +409,76 @@ namespace SeraphsLedger
                 if (chunk?.BlockEntities == null) continue;
                 foreach (BlockEntity be in chunk.BlockEntities.Values)
                 {
-                    if (!(be is BlockEntityHenBox box)) continue;
-                    if (Math.Abs(box.Pos.X - Pos.X) > Radius || Math.Abs(box.Pos.Z - Pos.Z) > Radius) continue;
-                    if (Math.Abs(box.Pos.Y - Pos.Y) > VerticalRange) continue;
-                    yield return box;
+                    if (be?.Pos == null) continue;
+                    if (Math.Abs(be.Pos.X - Pos.X) > Radius || Math.Abs(be.Pos.Z - Pos.Z) > Radius) continue;
+                    if (Math.Abs(be.Pos.Y - Pos.Y) > VerticalRange) continue;
+                    yield return be;
                 }
             }
         }
 
         // --- sync + tooltip --------------------------------------------------
+
+        // Sneak + right-click binds the corners you marked with /tally mark, or
+        // clears the region if one is already bound.
+        public void ToggleRegion(IPlayer player)
+        {
+            if (!(player is IServerPlayer splayer)) return;
+
+            if (HasRegion)
+            {
+                regionMin = regionMax = null;
+                Scan();
+                splayer.SendMessage(GlobalConstants.GeneralChatGroup,
+                    "Region cleared - back to walking the fence.", EnumChatType.Notification);
+                return;
+            }
+
+            if (!TallyMarks.TryGetBox(Api.World, player.PlayerUID, out BlockPos min, out BlockPos max, out string error))
+            {
+                splayer.SendMessage(GlobalConstants.GeneralChatGroup, error, EnumChatType.Notification);
+                return;
+            }
+
+            regionMin = min;
+            regionMax = max;
+            Scan();
+
+            // The corners have done their job now that a board holds the box, so
+            // forget them and put their highlights out. Otherwise the pillars and
+            // the violet outline stay lit over the pen until the player thinks to
+            // run /tally clear, which reads as the binding not having taken.
+            TallyMarks.Clear(player.PlayerUID);
+            if (Api is ICoreServerAPI sapi) TallyMarks.UpdateHighlight(sapi, splayer);
+
+            splayer.SendMessage(GlobalConstants.GeneralChatGroup,
+                $"Region bound: {RegionSize()}. Counting everything inside it, fence or no fence.",
+                EnumChatType.Notification);
+        }
+
+        // Footprint plus the actual height range, rather than three bare numbers:
+        // when a board counts nothing, where the box's floor sits is the first
+        // thing worth knowing.
+        private string RegionSize() =>
+            $"{regionMax.X - regionMin.X + 1} x {regionMax.Z - regionMin.Z + 1}, Y {regionMin.Y}-{regionMax.Y}";
+
+        // The box's footprint at its floor - what you want to see round a pen.
+        private List<BlockPos> RegionOutline()
+        {
+            var list = new List<BlockPos>();
+            int y = regionMin.Y;
+            for (int x = regionMin.X; x <= regionMax.X; x++)
+            {
+                list.Add(new BlockPos(x, y, regionMin.Z));
+                if (regionMax.Z != regionMin.Z) list.Add(new BlockPos(x, y, regionMax.Z));
+            }
+            for (int z = regionMin.Z + 1; z < regionMax.Z; z++)
+            {
+                list.Add(new BlockPos(regionMin.X, y, z));
+                if (regionMax.X != regionMin.X) list.Add(new BlockPos(regionMax.X, y, z));
+            }
+            return list;
+        }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
@@ -343,6 +497,12 @@ namespace SeraphsLedger
             var pg = new TreeAttribute();
             foreach (var kv in pregnant) pg.SetInt(kv.Key, kv.Value);
             t["pregnant"] = pg;
+            t.SetBool("hasRegion", HasRegion);
+            if (HasRegion)
+            {
+                t.SetInt("rMinX", regionMin.X); t.SetInt("rMinY", regionMin.Y); t.SetInt("rMinZ", regionMin.Z);
+                t.SetInt("rMaxX", regionMax.X); t.SetInt("rMaxY", regionMax.Y); t.SetInt("rMaxZ", regionMax.Z);
+            }
             tree["tally"] = t;
         }
 
@@ -367,6 +527,15 @@ namespace SeraphsLedger
             {
                 foreach (var kv in pg) pregnant[kv.Key] = pg.GetInt(kv.Key);
             }
+            if (t.GetBool("hasRegion"))
+            {
+                regionMin = new BlockPos(t.GetInt("rMinX"), t.GetInt("rMinY"), t.GetInt("rMinZ"));
+                regionMax = new BlockPos(t.GetInt("rMaxX"), t.GetInt("rMaxY"), t.GetInt("rMaxZ"));
+            }
+            else
+            {
+                regionMin = regionMax = null;
+            }
         }
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
@@ -384,7 +553,9 @@ namespace SeraphsLedger
                 return;
             }
 
-            dsc.AppendLine(penClosed
+            dsc.AppendLine(HasRegion
+                ? $"Region: {RegionSize()} (marked)"
+                : penClosed
                 ? $"Pen closed ({penArea:N0} blocks)"
                 : $"<font color=\"#e0a060\">Pen open (gap or gate) - counting {Radius} blocks out.</font>");
 
@@ -400,9 +571,9 @@ namespace SeraphsLedger
                          .OrderByDescending(g => g.Sum(kv => kv.Value)))
             {
                 dsc.AppendLine($"{SpeciesName(species.Key)}: {species.Sum(kv => kv.Value)}");
-                dsc.AppendLine("  " + string.Join(" · ", species
+                dsc.AppendLine(Subline(string.Join(" · ", species
                     .OrderByDescending(kv => kv.Value)
-                    .Select(kv => $"{KindName(kv.Key)} {kv.Value}")));
+                    .Select(kv => $"{KindName(kv.Key)} {kv.Value}"))));
             }
 
             // One summary line rather than folding it into the per-kind
@@ -413,9 +584,9 @@ namespace SeraphsLedger
                 int total = 0;
                 foreach (var kv in pregnant) total += kv.Value;
                 dsc.AppendLine($"Pregnant: {total}");
-                dsc.AppendLine("  " + string.Join(" · ", pregnant
+                dsc.AppendLine(Subline(string.Join(" · ", pregnant
                     .OrderByDescending(kv => kv.Value)
-                    .Select(kv => $"{SpeciesName(kv.Key)} {kv.Value}")));
+                    .Select(kv => $"{SpeciesName(kv.Key)} {kv.Value}"))));
             }
 
             if (henboxes > 0 || eggsLoose > 0)
@@ -425,6 +596,19 @@ namespace SeraphsLedger
                     : $"{eggsInBoxes} in henboxes";
                 dsc.AppendLine($"Eggs: {boxed} · {eggsLoose} loose");
             }
+        }
+
+        // A breakdown line under its heading, dimmed rather than indented.
+        //
+        // Indenting with spaces looks right but measures wrong: the block-info
+        // HUD sizes its box to the widest line, and a line's width comes from
+        // Cairo's ink extents (TextDrawUtil.Lineize), which put leading spaces
+        // in the bearing and leave them out of the width. The line is still
+        // drawn from the same X with the spaces, so an indented line overruns
+        // the box by exactly its indent and the last character is clipped.
+        private static string Subline(string text)
+        {
+            return "<font color=\"#a8a8a8\">" + text + "</font>";
         }
 
         private static string SpeciesOf(string code)
@@ -456,7 +640,8 @@ namespace SeraphsLedger
             if (world.Side == EnumAppSide.Server
                 && world.BlockAccessor.GetBlockEntity(blockSel.Position) is BlockEntityTallyBoard board)
             {
-                board.ShowPen(byPlayer);
+                if (byPlayer?.Entity?.Controls?.Sneak == true) board.ToggleRegion(byPlayer);
+                else board.ShowPen(byPlayer);
             }
             return true;
         }
@@ -480,6 +665,12 @@ namespace SeraphsLedger
                 {
                     ActionLangCode = "seraphsledger:blockhelp-tallyboard-showpen",
                     MouseButton = EnumMouseButton.Right
+                },
+                new WorldInteraction
+                {
+                    ActionLangCode = "seraphsledger:blockhelp-tallyboard-region",
+                    MouseButton = EnumMouseButton.Right,
+                    HotKeyCode = "sneak"
                 }
             }.Append(base.GetPlacedBlockInteractionHelp(world, selection, forPlayer));
         }
@@ -804,5 +995,125 @@ namespace SeraphsLedger
             origin.X + (int)((key >> 40) & 0xFFFFF) - 1024,
             (int)(key & 0xFFFFF),
             origin.Z + (int)((key >> 20) & 0xFFFFF) - 1024);
+    }
+
+    // Corner marks for /tally mark, per player, server-side and in memory only -
+    // they exist just long enough to bind a board to a box.
+    internal static class TallyMarks
+    {
+        private const int MaxFootprint = 128;
+        private const int MaxHeight = 64;
+
+        // How far below the height you marked at the floor may drop to reach the
+        // ground. Enough to mark a pen from the wall top or the barn floor above
+        // it, not enough for a footprint that overhangs a cliff to swallow the
+        // valley under it.
+        private const int MaxFloorDrop = 16;
+
+        private static readonly Dictionary<string, List<BlockPos>> marks =
+            new Dictionary<string, List<BlockPos>>();
+
+        // Returns which corner this was: 1 starts a fresh pair, 2 completes it.
+        public static int Mark(string uid, BlockPos pos)
+        {
+            if (!marks.TryGetValue(uid, out List<BlockPos> list) || list.Count >= 2)
+            {
+                marks[uid] = list = new List<BlockPos>();
+            }
+            list.Add(pos.Copy());
+            return list.Count;
+        }
+
+        public static void Clear(string uid) => marks.Remove(uid);
+
+        // Each corner shows as a glowing pillar, and once both are set the box
+        // they describe is outlined - the same shape the swatch tool uses, so a
+        // marked pen reads the same way a marked build does.
+        private const int HighlightSlot = 9491;
+
+        public static void UpdateHighlight(ICoreServerAPI sapi, IServerPlayer player)
+        {
+            marks.TryGetValue(player.PlayerUID, out List<BlockPos> mk);
+
+            int cornerOne = ColorUtil.ColorFromRgba(60, 230, 120, 160);
+            int cornerTwo = ColorUtil.ColorFromRgba(230, 180, 40, 160);
+            int boxColor = ColorUtil.ColorFromRgba(200, 140, 240, 70);
+
+            SetCube(sapi, player, HighlightSlot,
+                mk?.Count >= 1 ? mk[0] : null,
+                mk?.Count >= 1 ? mk[0].AddCopy(1, 5, 1) : null, cornerOne);
+            SetCube(sapi, player, HighlightSlot + 1,
+                mk?.Count >= 2 ? mk[1] : null,
+                mk?.Count >= 2 ? mk[1].AddCopy(1, 5, 1) : null, cornerTwo);
+
+            BlockPos boxMin = null, boxMax = null;
+            if (mk?.Count >= 2 && TryGetBox(sapi.World, player.PlayerUID, out BlockPos min, out BlockPos max, out _))
+            {
+                boxMin = min;
+                boxMax = max.AddCopy(1, 1, 1);
+            }
+            SetCube(sapi, player, HighlightSlot + 2, boxMin, boxMax, boxColor);
+        }
+
+        private static void SetCube(ICoreServerAPI sapi, IServerPlayer player, int slot,
+                                    BlockPos a, BlockPos b, int color)
+        {
+            var cube = a == null ? new List<BlockPos>() : new List<BlockPos> { a, b };
+            sapi.World.HighlightBlocks(player, slot, cube, new List<int> { color },
+                EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Cube);
+        }
+
+        public static bool TryGetBox(IWorldAccessor world, string uid,
+                                     out BlockPos min, out BlockPos max, out string error)
+        {
+            min = null;
+            max = null;
+            if (!marks.TryGetValue(uid, out List<BlockPos> list) || list.Count < 2)
+            {
+                error = "Mark two opposite corners first: aim at a block and use /tally mark, "
+                      + "then aim at the far corner and /tally mark again.";
+                return false;
+            }
+
+            min = new BlockPos(Math.Min(list[0].X, list[1].X), Math.Min(list[0].Y, list[1].Y), Math.Min(list[0].Z, list[1].Z));
+            max = new BlockPos(Math.Max(list[0].X, list[1].X), Math.Max(list[0].Y, list[1].Y), Math.Max(list[0].Z, list[1].Z));
+
+            if (max.X - min.X + 1 > MaxFootprint || max.Z - min.Z + 1 > MaxFootprint)
+            {
+                error = $"That is more than {MaxFootprint} blocks across. Mark a smaller area.";
+                return false;
+            }
+
+            // Two marks at the same height read as a footprint, and the box grows
+            // to cover the ground under it: the top rises to whatever stands in
+            // the footprint, and the floor drops to the lowest ground in it.
+            //
+            // Both directions matter. Marking from a wall top or from the barn
+            // floor above a pen used to pin the floor at the height you happened
+            // to be standing, so the animals down in the pen fell outside the box
+            // and the board reported none - while a henbox up at marking height
+            // still counted, which made it look like the region was simply being
+            // ignored. Marks at different heights are still taken literally, for
+            // a loft or a stacked coop.
+            if (list[0].Y == list[1].Y)
+            {
+                IBlockAccessor ba = world.BlockAccessor;
+                int floor = min.Y;
+                for (int x = min.X; x <= max.X; x++)
+                {
+                    for (int z = min.Z; z <= max.Z; z++)
+                    {
+                        int h = ba.GetRainMapHeightAt(x, z);
+                        max.Y = Math.Max(max.Y, h);
+                        floor = Math.Min(floor, h - 1);
+                    }
+                }
+                min.Y = Math.Max(floor, min.Y - MaxFloorDrop);
+                max.Y = Math.Min(max.Y, min.Y + MaxHeight - 1);
+            }
+
+            error = null;
+            return true;
+        }
     }
 }

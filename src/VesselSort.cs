@@ -22,22 +22,39 @@ namespace SeraphsLedger
     }
 
     // Server-authoritative sort of a large storage vessel, laid out as a food
-    // store: crocks first so the ones to eat next sit at the top of the grid.
+    // store: what has to be eaten soonest sits at the top of the grid.
     //
     //   1. unsealed crocks with food in them - these spoil at the normal rate,
     //      so they come first
     //   2. sealed crocks with food in them
     //   3. empty crocks
-    //   4. everything else, by item code
+    //   4. everything else that spoils, in one queue - fruit, vegetables, eggs,
+    //      grain, flour, bread, cheese, meat, a bowl of a meal
+    //   5. food that keeps: what can be eaten with no spoil time on it, and what
+    //      food is made with, by item code
+    //   6. everything else, by item code
     //
-    // Within 1 and 2, the crock that goes off soonest comes first - ordered by
-    // the same "fresh for ..." figure its tooltip shows, so the grid reads in
-    // the order the player would eat it. (An earlier version ordered by when the
-    // food was made; that disagreed with the tooltip, since foods keep for
+    // Within 1, 2 and 4 the thing that goes off soonest comes first - ordered by
+    // the same "fresh for ..." figure its tooltip shows, so the grid reads in the
+    // order the player would eat it. (An earlier version ordered crocks by when
+    // the food was made; that disagreed with the tooltip, since foods keep for
     // different lengths and a meal's seal slows it more than raw food's.)
+    //
+    // Nothing here writes to the food it reads: freshness is taken off copies,
+    // because the figure comes from the engine's own transition update, which
+    // would otherwise advance decay - and could turn a stack to rot - on a mere
+    // press of the Sort button.
     public static class VesselSorter
     {
         public static readonly AssetLocation VesselCode = new AssetLocation("seraphsledger", "largestoragevessel");
+
+        // The groups above, in grid order.
+        private const int RankCrockOpen = 0;
+        private const int RankCrockSealed = 1;
+        private const int RankCrockEmpty = 2;
+        private const int RankSpoils = 3;
+        private const int RankKeeps = 4;
+        private const int RankOther = 5;
 
         public static void Sort(InventoryBase inv, IWorldAccessor world)
         {
@@ -70,10 +87,26 @@ namespace SeraphsLedger
                 if (!source.Empty) merged.Add(source.Itemstack);
             }
 
+            List<BarrelRecipeIngredient> foodInputs = FoodBarrelInputs(world);
+
+            // The vessel's slots are empty from here on, so nothing that goes
+            // wrong reading one stack may cost the player the rest: a stack that
+            // can't be read falls in with "everything else" and still gets put
+            // back.
             var keyed = new List<(ItemStack stack, int rank, double fresh, string code)>(merged.Count);
             foreach (ItemStack stack in merged)
             {
-                int rank = Rank(stack, inv, world, out double fresh);
+                int rank = RankOther;
+                double fresh = double.MaxValue;
+                try
+                {
+                    rank = Rank(stack, inv, world, foodInputs, out fresh);
+                }
+                catch (Exception e)
+                {
+                    world.Logger.Warning("[seraphsledger] could not read the freshness of {0}: {1}",
+                        stack.Collectible?.Code, e);
+                }
                 keyed.Add((stack, rank, fresh, stack.Collectible?.Code?.ToString() ?? ""));
             }
 
@@ -93,52 +126,197 @@ namespace SeraphsLedger
             }
         }
 
-        // 0 unsealed crock with food, 1 sealed crock with food, 2 empty crock,
-        // 3 anything else. freshness is only meaningful for 0 and 1: the hours
-        // the contents stay fresh at this vessel's rate, i.e. the number the
-        // crock's tooltip shows as "fresh for ...". It is MaxValue (sorts last
-        // in its group) for contents that don't perish.
-        private static int Rank(ItemStack stack, InventoryBase vessel, IWorldAccessor world, out double freshness)
+        // Which group this stack belongs in, and - for the three groups ordered
+        // by it - the hours it stays fresh at this vessel's rate, i.e. the number
+        // its tooltip shows as "fresh for ...". Freshness is MaxValue, which
+        // sorts last inside a group and hands the ordering to the item code, for
+        // anything with no figure to show: food that never spoils, and food whose
+        // spoiling is halted, which a tooltip renders as a bare "Perishable".
+        private static int Rank(ItemStack stack, InventoryBase vessel, IWorldAccessor world,
+            List<BarrelRecipeIngredient> foodInputs, out double freshness)
         {
             freshness = double.MaxValue;
-            if (!(stack.Collectible is BlockCrock crock)) return 3;
 
-            ItemStack[] contents = crock.GetNonEmptyContents(world, stack);
-            if (contents == null || contents.Length == 0) return 2;
+            if (stack.Collectible is BlockCrock crock)
+            {
+                ItemStack[] contents = crock.GetNonEmptyContents(world, stack);
+                if (contents == null || contents.Length == 0) return RankCrockEmpty;
 
-            freshness = FreshHoursShown(crock, stack, contents, vessel, world);
-            return stack.Attributes.GetBool("sealed", false) ? 1 : 0;
+                ContainedFreshHours(crock, stack, contents, vessel, world, out freshness);
+                return stack.Attributes.GetBool("sealed", false) ? RankCrockSealed : RankCrockOpen;
+            }
+
+            // Any other container of food - a bowl or a pot of a meal - reads its
+            // contents the same way a crock does, then queues with the loose food
+            // rather than with the crocks: a crock is a larder, a bowl is a
+            // portion, and a portion is eaten before anything is opened.
+            if (stack.Collectible is BlockContainer container)
+            {
+                ItemStack[] contents = container.GetNonEmptyContents(world, stack);
+                if (contents != null && contents.Length > 0
+                    && ContainedFreshHours(container, stack, contents, vessel, world, out freshness))
+                {
+                    return RankSpoils;
+                }
+            }
+
+            // A loose stack, read on its own - and so is a container that holds
+            // nothing that spoils, in case the container is the perishable thing.
+            if (LooseFreshHours(stack, vessel, world, out freshness)) return RankSpoils;
+
+            freshness = double.MaxValue;
+            return IsFood(stack, world, foodInputs) ? RankKeeps : RankOther;
+        }
+
+        // A loose stack's fresh hours, read off a copy of it in a slot that
+        // belongs to the vessel - so the reading picks up the vessel's own perish
+        // rate, exactly as the tooltip does for the slot it is sitting in.
+        private static bool LooseFreshHours(ItemStack stack, InventoryBase vessel, IWorldAccessor world,
+            out double freshHours)
+        {
+            return PerishHours(Probe(stack.Clone(), vessel), world, out freshHours);
+        }
+
+        // A slot to read a stack's freshness through. It belongs to the vessel's
+        // inventory so that the vessel's perish rate applies, but it is not one of
+        // that inventory's own slots - and a transition update calls MarkDirty on
+        // the slot it is given whenever something finishes transitioning, which
+        // from a foreign slot throws ("Supplied slot is not part of this
+        // inventory") and would also recurse into another update. Swallowing that
+        // notification is what vanilla's own probe slots do.
+        private static DummySlot Probe(ItemStack stack, InventoryBase inv)
+        {
+            var slot = new DummySlot(stack, inv);
+            slot.MarkedDirty += () => true;
+            return slot;
         }
 
         // Mirrors BlockCrock.GetHeldItemInfo: the first perishable content stack
         // goes into a dummy slot whose inventory perishes at the vessel's rate
-        // times the crock's own modifier (the seal: x0.1 for a meal, x0.25 for
-        // anything else), and the fresh hours left are divided by that rate.
-        // GetNonEmptyContents deserializes fresh copies, so updating them here
-        // leaves the crock itself untouched.
-        private static double FreshHoursShown(BlockCrock crock, ItemStack crockStack, ItemStack[] contents,
-            InventoryBase vessel, IWorldAccessor world)
+        // times the container's own modifier (a crock's seal: x0.1 for a meal,
+        // x0.25 for anything else), and the fresh hours left are divided by that
+        // rate.
+        private static bool ContainedFreshHours(BlockContainer container, ItemStack containerStack,
+            ItemStack[] contents, InventoryBase vessel, IWorldAccessor world, out double freshHours)
         {
-            var crockSlot = new DummySlot(crockStack, vessel);
+            DummySlot containerSlot = Probe(containerStack, vessel);
             var dummyInv = new DummyInventory(world.Api, 1);
             dummyInv.OnAcquireTransitionSpeed += (transType, _, _) =>
                 transType != EnumTransitionType.Perish ? 0f
-                    : vessel.GetTransitionSpeedMul(transType, crockStack)
-                      * crock.GetContainingTransitionModifierContained(world, crockSlot, transType);
+                    : vessel.GetTransitionSpeedMul(transType, containerStack)
+                      * container.GetContainingTransitionModifierContained(world, containerSlot, transType);
 
-            ItemSlot slot = BlockCrock.GetDummySlotForFirstPerishableStack(world, contents, null, dummyInv);
-            ItemStack food = slot?.Itemstack;
-            if (food == null) return double.MaxValue;
+            // GetNonEmptyContents hands out the very stacks the container holds in
+            // its attributes, so hand the probe copies of them.
+            var copies = new ItemStack[contents.Length];
+            for (int i = 0; i < contents.Length; i++) copies[i] = contents[i]?.Clone();
 
-            TransitionState[] states = food.Collectible.UpdateAndGetTransitionStates(world, slot);
-            if (states == null) return double.MaxValue;
+            ItemSlot slot = BlockCrock.GetDummySlotForFirstPerishableStack(world, copies, null, dummyInv);
+            return PerishHours(slot, world, out freshHours);
+        }
+
+        // The "fresh for ..." figure for whatever is in this slot, worked out the
+        // way CollectibleObject.AppendPerishableInfoText does it: the fresh hours
+        // left over the slot's perish rate.
+        //
+        // False means this doesn't spoil at all. True with freshHours left at
+        // MaxValue means it spoils but no time can be put on it - a rate of zero
+        // (food still hot from the pot), or a stack whose transitions are frozen.
+        private static bool PerishHours(ItemSlot slot, IWorldAccessor world, out double freshHours)
+        {
+            freshHours = double.MaxValue;
+
+            ItemStack stack = slot?.Itemstack;
+            if (stack?.Collectible == null || !Spoils(stack, world)) return false;
+
+            TransitionState[] states = stack.Collectible.UpdateAndGetTransitionStates(world, slot);
+            if (states == null) return true;
+
             foreach (TransitionState state in states)
             {
-                if (state.Props.Type != EnumTransitionType.Perish) continue;
-                float rate = food.Collectible.GetTransitionRateMul(world, slot, EnumTransitionType.Perish);
-                return rate > 0 ? state.FreshHoursLeft / rate : double.MaxValue;
+                // A stack that transitions as it is read - food gone to rot -
+                // leaves null entries behind.
+                if (state?.Props == null || state.Props.Type != EnumTransitionType.Perish) continue;
+
+                float rate = stack.Collectible.GetTransitionRateMul(world, slot, EnumTransitionType.Perish);
+                if (rate > 0) freshHours = state.FreshHoursLeft / rate;
+                return true;
             }
-            return double.MaxValue;
+            return true;
+        }
+
+        // Does this have a spoil time at all? Taken from the transitionable
+        // properties rather than from the figure, so that food whose spoiling is
+        // halted is still filed with the food that spoils.
+        private static bool Spoils(ItemStack stack, IWorldAccessor world)
+        {
+            TransitionableProperties[] props = stack.Collectible.GetTransitionableProperties(world, stack, null);
+            if (props == null) return false;
+
+            foreach (TransitionableProperties prop in props)
+            {
+                if (prop != null && prop.Type == EnumTransitionType.Perish) return true;
+            }
+            return false;
+        }
+
+        // Food with no spoil time on it: what can be eaten as it is (honeycomb),
+        // and what food is made with (salt). Salt feeds nobody and keeps for
+        // ever, but a food store is where it lives - it is what turns meat into
+        // cured meat - so rather than name it, take the ingredients of the barrel
+        // recipes that make food. That covers whatever a mod adds and leaves
+        // quicklime and tannin bark out.
+        private static bool IsFood(ItemStack stack, IWorldAccessor world,
+            List<BarrelRecipeIngredient> foodInputs)
+        {
+            if (Edible(stack, world)) return true;
+
+            foreach (BarrelRecipeIngredient ing in foodInputs)
+            {
+                if (ing.SatisfiesAsIngredient(stack)) return true;
+            }
+            return false;
+        }
+
+        private static bool Edible(ItemStack stack, IWorldAccessor world)
+        {
+            FoodNutritionProperties props = stack.Collectible?.GetNutritionProperties(world, stack, null);
+            return props != null && props.FoodCategory != EnumFoodCategory.NoNutrition;
+        }
+
+        // The ingredients of every barrel recipe whose output is food. Walked
+        // afresh on each sort rather than cached: a sort is a button press, and
+        // the recipe list is a few dozen entries long.
+        private static List<BarrelRecipeIngredient> FoodBarrelInputs(IWorldAccessor world)
+        {
+            var inputs = new List<BarrelRecipeIngredient>();
+
+            List<BarrelRecipe> recipes;
+            try
+            {
+                recipes = world.Api?.GetBarrelRecipes();
+            }
+            catch (Exception)
+            {
+                // No recipe registry to hand; nutrition alone decides what food is.
+                return inputs;
+            }
+            if (recipes == null) return inputs;
+
+            foreach (BarrelRecipe recipe in recipes)
+            {
+                if (recipe?.Ingredients == null) continue;
+
+                ItemStack output = recipe.Output?.ResolvedItemstack;
+                if (output?.Collectible == null) continue;
+                if (!Spoils(output, world) && !Edible(output, world)) continue;
+
+                foreach (BarrelRecipeIngredient ing in recipe.Ingredients)
+                {
+                    if (ing != null) inputs.Add(ing);
+                }
+            }
+            return inputs;
         }
 
         public static void OnSortPacket(IServerPlayer player, SortVesselPacket packet)
@@ -171,8 +349,10 @@ namespace SeraphsLedger
         private const string ButtonKey = "seraphsledgerVesselSortBtn";
         private const double ButtonW = 160;
         private const string TooltipText =
-            "Unsealed crocks first, then sealed crocks, each soonest to spoil first. "
-            + "Then empty crocks, then everything else by item.";
+            "Unsealed crocks first, then sealed crocks, then empty crocks. Then every other "
+            + "food that spoils - fruit, eggs, bread, a bowl of a meal - in one queue. "
+            + "Anything with a spoil time comes soonest-to-spoil first. Then food that keeps, "
+            + "then everything else by item.";
 
         // Set from the config when the patch is applied.
         internal static bool ShowTooltip = true;

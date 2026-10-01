@@ -15,5 +15,6 @@
   "swatch-hotkey-name": "Seraph's Ledger material swatch",
   "block-tallyboard-*": "Animal Tally Board",
   "blockhelp-tallyboard-showpen": "Mark the pen it counts",
-  "blockdesc-tallyboard-*": "Hang it inside a pen. It counts the animals, henbox eggs and loose eggs within the fence, up to 100 blocks out. Look at it to read the tally."
+  "blockdesc-tallyboard-*": "Hang it inside a pen. It counts the animals, henbox eggs and loose eggs within the fence, up to 100 blocks out. Look at it to read the tally.",
+  "blockhelp-tallyboard-region": "Bind/clear the marked counting region"
 }

@@ -43,15 +43,30 @@ They keep the vanilla appearance, footprint, and open/close sounds.
 - **Ctrl + left-click** on any slot in an inventory dialog dumps every non-empty
   slot of that inventory into the open container(s), using the engine's own
   shift-click transfer. No-op when only your bare player inventory is open.
+- **Shift + middle mouse** on a slot moves every stack of *that one item* out of
+  that inventory — all your flax, none of your ore — again through the engine's
+  shift-click transfer, so stacks land exactly where shift-clicking each of them
+  would have put them.
+  - **Rebindable** under *Settings → Controls → Inventory hotkeys* as
+    "Move all of one item". Bind it to any mouse button, with or without
+    Ctrl/Shift/Alt, or to a plain key — a key binding acts on the slot the mouse
+    is hovering.
+  - Works with nothing else open, where it gathers an item between your hotbar
+    and backpack. Matches on the item itself, ignoring durability and freshness,
+    so a mixed-wear pile of copper axes still moves as one.
 - **Sort** button in the player inventory — server-authoritative sort of your
   worn-bag contents (consolidates partial stacks, orders by item).
 - **Trash** button in the player inventory — destroys whatever stack is
   currently held on the mouse cursor.
 - **Sort by freshness** button on the Large Storage Vessel — lays the vessel out as a food
   store: unsealed crocks first, then sealed crocks, each ordered by the "fresh
-  for" time in its tooltip, soonest to spoil first, then empty crocks, then everything else by
-  item. Partial stacks are merged the game's own way, so perishables average
-  their freshness.
+  for" time in its tooltip, soonest to spoil first, then empty crocks. Behind
+  them comes every other food that spoils — fruit, vegetables, eggs, grain,
+  flour, bread, cheese, meat, a bowl of a meal — in one queue, again soonest to
+  spoil first, so the grid reads in the order you would eat it. Then the foods
+  that keep: what can be eaten as it is, like honeycomb, and what food is made
+  with, like salt. Everything else follows by item. Partial stacks are merged the
+  game's own way, so perishables average their freshness.
 
 ### Barrels
 
@@ -73,7 +88,8 @@ They keep the vanilla appearance, footprint, and open/close sounds.
   wall inside a pen. Look at it and the tooltip lists the animals inside the
   fence, grouped by species and broken down by kind (hens, roosters, pullets,
   cockerels, chicks; rams, ewes, lambs; ...), plus eggs in henboxes (and how
-  many are fertile) and eggs lying loose.
+  many are fertile) and eggs lying loose — both the ones laid on the floor when
+  every henbox is taken and any dropped on the ground.
   - The pen is found by walking the ground outward from the board the way an
     animal could: fences, walls, closed gates and closed doors stop it, open
     doorways don't, so coops attached to the pen count as part of it.
@@ -84,6 +100,18 @@ They keep the vanilla appearance, footprint, and open/close sounds.
   - **Right-click the board** to mark the pen it counts: the outline of a
     closed pen, or, when it isn't closed, the trail it followed out - which
     crosses the fence line right at the gap.
+  - **Or tell it the region outright** — `/tally mark` one corner, `/tally mark`
+    the opposite one (each lights up as a pillar, with the box between them
+    outlined), then **sneak + right-click** a board to bind it. Binding clears
+    the marks and their highlights; `/tally clear` forgets them without binding,
+    and sneak + right-click again unbinds the board back to walking the fence.
+    - Two corners at the same height read as a footprint: the box grows up to
+      whatever stands in it and down to the ground beneath it (up to 16 blocks
+      below where you marked), so you can mark a pen from its wall top without
+      leaving the animals underneath outside the box. Corners at different
+      heights are taken literally, for a loft or a stacked coop.
+    - The board's tooltip names the footprint and the height range it ended up
+      with — `Region: 22 x 37, Y 173-183 (marked)`.
   - Hang it on either face of a wall; if the walk escapes from the side it
     faces, the board tries the other side of that wall.
 
@@ -113,7 +141,8 @@ They keep the vanilla appearance, footprint, and open/close sounds.
 
 - **Toggle features on or off in-game** — press **Ctrl+Shift+L** (rebindable) or
   run `.slconfig` to open a settings window with a switch per feature: trader
-  ledger, ctrl+click move-all, Sort/Trash buttons, creative search auto-focus,
+  ledger, ctrl+click move-all, move all of one item, Sort/Trash buttons,
+  creative search auto-focus,
   enemy fast-despawn, large containers, silenced voices, barrel ingredient
   portions, and the distance challenge. Choices are saved to `ModConfig/seraphsledger/features.json`.
   - **A restart is required** for changes to take effect — the features are wired

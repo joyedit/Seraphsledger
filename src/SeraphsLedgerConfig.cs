@@ -26,6 +26,15 @@ namespace SeraphsLedger
     {
         public bool TraderLedger = true;
         public bool CtrlClickMoveAll = true;
+
+        // Move-matching: press the bound combination on a slot and every stack of
+        // that same item moves out of that inventory, the way a shift-click moves
+        // one. Default binding Shift + middle mouse, rebindable under
+        // Controls > Inventory hotkeys (a mouse button or a plain key both work).
+        // Unlike CtrlClickMoveAll it is useful with no container open - there it
+        // gathers an item between hotbar and backpack - so it carries no
+        // container guard.
+        public bool MoveMatchingItems = true;
         public bool SortTrashButtons = true;
         public bool LargeVesselSort = true;
         public bool LargeVesselSortTooltip = true;
