@@ -41,6 +41,15 @@ namespace SeraphsLedger
         public bool CreativeSearchAutofocus = true;
         public bool EnemyFastDespawn = true;
         public bool LargeContainers = true;
+
+        // The large containers' safety net. They hold more slots than the vanilla
+        // block entity defaults to, and that count lives in the block - so a save
+        // loaded without this mod trims every one of them to 16 slots and drops
+        // the rest for good. The ledger keeps a copy of their contents in the
+        // savegame's own mod data, which outlives the mod, spots the gap when a
+        // chunk comes back short, and holds what is missing until /sl rescue asks
+        // for it. It never writes to a container by itself.
+        public bool ContainerRescue = true;
         public bool SilencedVoices = true;
 
         // Auto-loot for the rest of the animals: deer, sheep, pigs, hares and

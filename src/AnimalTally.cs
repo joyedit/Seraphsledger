@@ -637,13 +637,36 @@ namespace SeraphsLedger
     {
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            if (world.Side == EnumAppSide.Server
-                && world.BlockAccessor.GetBlockEntity(blockSel.Position) is BlockEntityTallyBoard board)
-            {
-                if (byPlayer?.Entity?.Controls?.Sneak == true) board.ToggleRegion(byPlayer);
-                else board.ShowPen(byPlayer);
-            }
+            if (world.Side != EnumAppSide.Server) return true;
+
+            if (!(Revive(world, blockSel.Position) is BlockEntityTallyBoard board)) return true;
+
+            if (byPlayer?.Entity?.Controls?.Sneak == true) board.ToggleRegion(byPlayer);
+            else board.ShowPen(byPlayer);
             return true;
+        }
+
+        // The board's block entity, hung afresh if the board has lost it.
+        //
+        // A board can end up standing on the wall with nothing behind it: the
+        // engine discards a block entity whose class it cannot instantiate
+        // ("Failed loading blockentity ... Will discard it. Sorry.") and writes
+        // the chunk back without it, so loading a save once while this mod is
+        // disabled strips every board in the chunks that loaded. The block
+        // itself survives, and nothing in the engine ever gives it a new block
+        // entity - the board just sits there counting nothing.
+        //
+        // So hang a new one on first contact. The tally is a count of what is
+        // in the pen right now, and is recounted from scratch every ten seconds
+        // anyway; only a bound region is really lost, and binding a region is a
+        // right-click away.
+        private static BlockEntity Revive(IWorldAccessor world, BlockPos pos)
+        {
+            BlockEntity be = world.BlockAccessor.GetBlockEntity(pos);
+            if (be != null) return be;
+
+            world.BlockAccessor.SpawnBlockEntity("SeraphsLedgerTallyBoard", pos);
+            return world.BlockAccessor.GetBlockEntity(pos);
         }
 
         // Only the tally itself. The default implementation also appends
@@ -652,8 +675,15 @@ namespace SeraphsLedger
         // and you are reading the count off it.
         public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
         {
+            BlockEntity be = world.BlockAccessor.GetBlockEntity(pos);
+
+            // No block entity behind the board - see Revive. Say so rather than
+            // show a bare block name, which reads as a board that has nothing to
+            // count rather than one that isn't counting.
+            if (be == null) return "Right-click to start this board counting.";
+
             var sb = new StringBuilder();
-            world.BlockAccessor.GetBlockEntity(pos)?.GetBlockInfo(forPlayer, sb);
+            be.GetBlockInfo(forPlayer, sb);
             return sb.ToString().TrimEnd();
         }
 

@@ -51,6 +51,7 @@ namespace SeraphsLedger
         private Harmony barrelHarmony;
         private ICoreServerAPI sapi;
         private ICoreClientAPI capi;
+        private ContainerLedger containerLedger;
         private EnemyDropDespawn enemyDropDespawn;
         private StepCountdown stepCountdown;
         private StepCountdownHud stepCountdownHud;
@@ -370,6 +371,15 @@ namespace SeraphsLedger
                     .EndSubCommand();
             }
 
+            // The large containers' safety net: a copy of their contents in the
+            // savegame's mod data, and /sl rescue to put back whatever a
+            // mod-less load trimmed off. See ContainerLedger for why it is
+            // needed and why nothing is restored automatically.
+            if (cfg.ContainerRescue)
+            {
+                containerLedger = new ContainerLedger(api);
+            }
+
             // Hostiles vanish 2s after death dropping their harvest loot, and/or
             // every other animal is looted after a longer delay and left as a
             // carcass. One system serves both; it does nothing unless at least
@@ -476,6 +486,8 @@ namespace SeraphsLedger
             ClientChannel = null;
             MoveAll.Shutdown();
             configDialog = null;
+            containerLedger?.Dispose();
+            containerLedger = null;
             enemyDropDespawn?.Dispose();
             enemyDropDespawn = null;
             stepCountdown?.Dispose();
@@ -622,10 +634,13 @@ namespace SeraphsLedger
             double width = craft.fixedWidth;
             double y = output.fixedY + output.fixedHeight + 14.0;
 
-            const double trashSize = 30.0;
-            ElementBounds sortBounds = ElementBounds.Fixed(x, y, width, 20.0);
+            const double sortHeight = 26.0;
+            const double trashSize = 38.0;
+            const double gap = 6.0;
+
+            ElementBounds sortBounds = ElementBounds.Fixed(x, y, width, sortHeight);
             ElementBounds trashBounds = ElementBounds.Fixed(
-                x + (width - trashSize) / 2.0, y + 26.0, trashSize, trashSize);
+                x + (width - trashSize) / 2.0, y + sortHeight + gap, trashSize, trashSize);
 
             composer.Composed = false;
             composer

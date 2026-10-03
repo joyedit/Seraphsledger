@@ -2,6 +2,52 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.25.0 — 2026-10-01
+
+### Added
+- **A safety net for the large containers.** They hold more slots than the
+  vanilla block entity defaults to — a large trunk 100 against 16 — and that
+  count lives in the block. So a save loaded *once* without this mod trims every
+  large container it touches to 16 slots and drops the rest for good: no error,
+  no log line, just an emptier trunk. The game does this itself, before any mod
+  gets a say, and it is the same for every mod that widens a container.
+  - The mod now keeps a copy of each large container's contents in the
+    **savegame's own mod data**, which the game loads and writes back untouched
+    for mods that aren't installed — so the record survives exactly the thing
+    that destroys the container.
+  - When a container comes back from disk short of what the record says it
+    held, **the items go straight back in** and you get a chat line saying so.
+  - That only happens when the shortfall carries the engine's own fingerprint:
+    nothing left at or past slot 16, where the trimming always cuts, while the
+    record had something there. A container that is merely emptier than the
+    record — which is what your own hand looks like — is never refilled on its
+    own; it is held for you to decide.
+  - **`/sl rescue`** lists anything held back and **`/sl rescue 2`** puts that
+    one back; **`/sl forget 2`** drops an entry. Restoring only ever fills empty
+    slots, so it can add to a container but never overwrite what is in it now.
+  - **`/sl status`** says what is on record and what it can see right now.
+  - Matching is by contents, not by slot, so sorting a container (with this
+    mod's own Sort buttons, say) is never mistaken for a loss.
+  - The record is refreshed on every world save, in the same pass that writes the
+    chunks, so the two can never disagree by a save.
+  - Switchable in the settings panel (Ctrl+Shift+L) as **Large container
+    rescue**.
+  - It cannot recover a container that was already trimmed before this version:
+    there was no record to keep.
+
+### Fixed
+- **A tally board that lost its block entity starts counting again on a
+  right-click.** The engine discards a block entity whose class it cannot
+  instantiate, so loading a save without this mod leaves the boards standing on
+  the wall with nothing behind them and no way back. The board now hangs a new
+  one on first contact, and says `Right-click to start this board counting.`
+  until you do. A bound counting region is the one thing not recoverable — mark
+  and bind it again.
+
+### Changed
+- The player inventory's **Trash** button is larger (38px against 30px) and the
+  **Sort** button taller (26px against 20px).
+
 ## 1.24.1 — 2026-09-30
 
 ### Added

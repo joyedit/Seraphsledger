@@ -85,6 +85,13 @@ namespace SeraphsLedger
                 },
                 new Feature
                 {
+                    Title = "Large container rescue",
+                    Blurb = "Keeps a copy of large container contents and puts back whatever a mod-less load trimmed. /sl rescue, /sl status.",
+                    Get = () => config.ContainerRescue,
+                    Set = v => config.ContainerRescue = v,
+                },
+                new Feature
+                {
                     Title = "Creative search auto-focus",
                     Blurb = "Focuses the search box when the creative inventory opens.",
                     Get = () => config.CreativeSearchAutofocus,

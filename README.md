@@ -38,6 +38,28 @@ container in a shapeless grid recipe:
 
 They keep the vanilla appearance, footprint, and open/close sounds.
 
+> **Do not load a world holding large containers without this mod.** Their slot
+> count lives in the block, so with the mod absent the game falls back to the
+> vanilla block entity's 16 slots, reads only the first 16, and writes the
+> container back without the rest — silently, with no error, for every chunk
+> that loads in that session. This is the game's own behaviour, before any mod
+> gets a say, and it is the same for every mod that widens a container.
+>
+> The mod keeps a safety net against exactly this: a copy of every large
+> container's contents in the savegame's own mod data, which survives the mod
+> being gone. A container that comes back trimmed is **refilled automatically**,
+> with a chat line to say so — but only when the shortfall carries the engine's
+> fingerprint (nothing left at or past slot 16, where the trimming cuts). A
+> container that is merely emptier than the record is held instead: `/sl rescue`
+> lists those and puts one back on request, `/sl forget <n>` drops an entry, and
+> `/sl status` reports what is on record. Restoring only ever fills empty slots,
+> never over what is there now. It is switchable in the settings panel as
+> **Large container rescue**, and it only protects what it has already recorded:
+> a container trimmed before the mod was updated to 1.25.0 cannot be recovered.
+>
+> Turning the **large containers** feature off in the settings panel is safe —
+> it only stops the recipes; placed containers keep working.
+
 ### Inventory quality-of-life
 
 - **Ctrl + left-click** on any slot in an inventory dialog dumps every non-empty
