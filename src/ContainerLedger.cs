@@ -46,7 +46,7 @@ namespace SeraphsLedger
         private const string LossKey = "seraphsledger:containerlosses";
         private const string Domain = "seraphsledger";
 
-        private const int SweepIntervalMs = 15000;
+        private const int SweepIntervalMs = 60000;
 
         // What BlockEntityGenericTypedContainer falls back to when it cannot
         // read the block's own slot count - the edge every trimmed container is
@@ -300,13 +300,9 @@ namespace SeraphsLedger
 
             List<ItemStack> recorded = StacksOf(invTree);
             List<ItemStack> missing = Missing(recorded, inv);
-            bool trimmed = Trimmed(invTree, inv);
-
-            sapi.Logger.VerboseDebug(
-                "[seraphsledger] container {0} ({1}): {2} stack(s) on record, {3} in the container, {4} missing, trimmed={5}",
-                key, be.Block?.Code, recorded.Count, inv.Count(s => s != null && !s.Empty), missing.Count, trimmed);
-
             if (missing.Count == 0) return;
+
+            bool trimmed = Trimmed(invTree, inv);
 
             List<ItemStack> left = missing;
             if (trimmed)
