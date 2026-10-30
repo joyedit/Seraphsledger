@@ -4,8 +4,8 @@
   "name": "The Seraph's Ledger",
   "website": "https://github.com/joyedit/Seraphsledger",
   "authors": ["Feyd"],
-  "description": "A personal bundle of small Vintage Story tweaks: a trader ledger with map waypoints, large storage containers, bulk inventory moves, Sort/Trash buttons, ice-cooled cellars, a builder's material swatch tool, barrel ingredient portions, an animal tally board and more. Ctrl+Shift+L toggles every feature. WARNING: do not load a world holding large containers without this mod installed - the game falls back to the vanilla 16-slot container and silently drops everything past slot 16 (vanilla behaviour, and the same for every mod that widens a container). The mod keeps a copy of large container contents in the savegame's own mod data as a safety net; /sl rescue lists and restores whatever a mod-less load trimmed off.",
-  "version": "1.25.0",
+  "description": "A personal bundle of small Vintage Story tweaks: a trader ledger with map waypoints, large storage containers, bulk inventory moves, crate sweeps, Sort/Trash buttons, ice-cooled cellars, a builder's material swatch tool, barrel ingredient portions, an animal tally board, a sortable list of your installed mods and more. Ctrl+Shift+L toggles every feature. WARNING: do not load a world holding large containers without this mod installed - the game falls back to the vanilla 16-slot container and silently drops everything past slot 16 (vanilla behaviour, and the same for every mod that widens a container). The mod keeps a copy of large container contents in the savegame's own mod data as a safety net; /sl rescue lists and restores whatever a mod-less load trimmed off.",
+  "version": "1.28.0",
   "iconPath": "modicon.png",
   "dependencies": {
     "game": ""

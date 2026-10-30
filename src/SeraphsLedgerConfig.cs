@@ -35,6 +35,31 @@ namespace SeraphsLedger
         // gathers an item between hotbar and backpack - so it carries no
         // container guard.
         public bool MoveMatchingItems = true;
+
+        // Crate sweeps: three ways to empty every stack of what a crate holds out
+        // of your hotbar and bags in one gesture. A crate holds one kind of thing
+        // and names that kind itself, so a sweep can never put the wrong item in.
+        //
+        // The empty-handed one fills a gesture vanilla does nothing with at all
+        // (Ctrl + Shift + right-click with nothing in hand), so it adds a
+        // behaviour rather than replacing one, and ships on.
+        public bool CrateSweepEmptyHand = true;
+
+        // This one does change a vanilla interaction: Ctrl + Shift + right-click
+        // holding the item puts the held stack in, and with this on the sweep
+        // carries on past it. Off leaves that gesture exactly as vanilla has it.
+        public bool CrateSweepHeldStack = true;
+
+        // The move-matching binding above (Shift + middle mouse by default),
+        // pressed while looking at a crate, sweeps it - the same "move all of one
+        // item" idea pointed at a block instead of a slot. Registers that hotkey
+        // even when MoveMatchingItems itself is off.
+        //
+        // A mouse binding is watched on Event.MouseDown rather than through the
+        // hotkey, because vanilla's "pickblock" consumes a bare middle-mouse
+        // press before any mod hotkey is reached. See CrateSweep.InitClient.
+        public bool CrateSweepHotkey = true;
+
         public bool SortTrashButtons = true;
         public bool LargeVesselSort = true;
         public bool LargeVesselSortTooltip = true;
@@ -128,6 +153,17 @@ namespace SeraphsLedger
         // privilege, and stands aside for the standalone Swatch mod when that
         // is installed (both claim the same command and hotkey).
         public bool MaterialSwatch = true;
+
+        // Mod list browser: Ctrl+Shift+N (or .slmods) opens a sortable list of
+        // every installed mod - by install date, declared game version, available
+        // update, load order, load failures, enabled state, author or description,
+        // either way round, and enables or disables them. Costs nothing until it
+        // is opened, so it ships on.
+        //
+        // It is a dialog of our own rather than sort buttons on the game's mod
+        // manager because that screen only exists in the main menu, where no mod
+        // code is running - see the note at the top of ModList.cs.
+        public bool ModListBrowser = true;
 
         // Distance-challenge mode is off by default - it's an opt-in challenge run,
         // not a tweak everyone wants. StartMeters seeds a player's budget the first

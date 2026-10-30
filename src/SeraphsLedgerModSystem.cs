@@ -46,9 +46,11 @@ namespace SeraphsLedger
         private const string HarmonyId = "seraphsledger.ctrlmoveall";
         private const string IceCellarHarmonyId = "seraphsledger.icecellar";
         private const string BarrelHarmonyId = "seraphsledger.barrelportions";
+        private const string CrateHarmonyId = "seraphsledger.cratesweep";
         private Harmony harmony;
         private Harmony iceCellarHarmony;
         private Harmony barrelHarmony;
+        private Harmony crateHarmony;
         private ICoreServerAPI sapi;
         private ICoreClientAPI capi;
         private ContainerLedger containerLedger;
@@ -65,7 +67,8 @@ namespace SeraphsLedger
                 .RegisterMessageType<SortBackpackPacket>()
                 .RegisterMessageType<TrashCursorPacket>()
                 .RegisterMessageType<SortVesselPacket>()
-                .RegisterMessageType<ShowTallyRegionPacket>();
+                .RegisterMessageType<ShowTallyRegionPacket>()
+                .RegisterMessageType<SweepCratePacket>();
 
             // Ice-cooled cellars run on both sides: the server applies the
             // reduced perish rate to stored food, the client shows it in the
@@ -141,6 +144,48 @@ namespace SeraphsLedger
                     postfix: new HarmonyMethod(AccessTools.Method(
                         typeof(BarrelPortionPatches), nameof(BarrelPortionPatches.GetRemainingSlotSpacePostfix))));
             }
+
+            // Crate sweeps. Both sides, for the same reason the barrel clamp is:
+            // a crate interaction is run on the client for responsiveness and
+            // re-run on the server from the interact packet, so a sweep applied
+            // to only one of them would desync. The flags are read on both sides
+            // too - the hotkey route is asked for by the client and carried out
+            // by the server.
+            CrateSweep.EmptyHandEnabled = cfg.CrateSweepEmptyHand;
+            CrateSweep.HeldStackEnabled = cfg.CrateSweepHeldStack;
+            CrateSweep.HotkeyEnabled = cfg.CrateSweepHotkey;
+
+            if ((cfg.CrateSweepEmptyHand || cfg.CrateSweepHeldStack) && !Harmony.HasAnyPatches(CrateHarmonyId))
+            {
+                crateHarmony = new Harmony(CrateHarmonyId);
+
+                var crateInteract = AccessTools.Method(
+                    typeof(Vintagestory.GameContent.BlockEntityCrate),
+                    nameof(Vintagestory.GameContent.BlockEntityCrate.OnBlockInteractStart));
+                if (crateInteract != null)
+                {
+                    crateHarmony.Patch(crateInteract,
+                        prefix: new HarmonyMethod(AccessTools.Method(
+                            typeof(CrateInteractSweepPatch), nameof(CrateInteractSweepPatch.Prefix))),
+                        postfix: new HarmonyMethod(AccessTools.Method(
+                            typeof(CrateInteractSweepPatch), nameof(CrateInteractSweepPatch.Postfix))));
+                }
+
+                // The extra line in the crate's interaction help is client-only
+                // text, but the method is the block's, so it is patched here with
+                // the rest rather than split across two Harmony instances.
+                if (cfg.CrateSweepEmptyHand)
+                {
+                    var crateHelp = AccessTools.Method(
+                        typeof(Vintagestory.GameContent.BlockCrate),
+                        nameof(Vintagestory.GameContent.BlockCrate.GetPlacedBlockInteractionHelp));
+                    if (crateHelp != null)
+                    {
+                        crateHarmony.Patch(crateHelp, postfix: new HarmonyMethod(AccessTools.Method(
+                            typeof(CrateInteractionHelpPatch), nameof(CrateInteractionHelpPatch.Postfix))));
+                    }
+                }
+            }
         }
 
         // The large-container recipes are plain grid-recipe JSON, auto-loaded by the
@@ -210,7 +255,15 @@ namespace SeraphsLedger
             MoveAll.Init(api);
             MoveAll.MoveAllEnabled = cfg.CtrlClickMoveAll;
             MoveAll.MoveMatchingEnabled = cfg.MoveMatchingItems;
-            if (cfg.MoveMatchingItems) MoveAll.RegisterHotkey(api);
+            // Registered when either feature wants it: the crate sweep reuses this
+            // one binding, so it has to exist even with move-matching itself off.
+            if (cfg.MoveMatchingItems || cfg.CrateSweepHotkey) MoveAll.RegisterHotkey(api);
+
+            // The crate sweep's own client hook. It has to watch Event.MouseDown
+            // as well as the hotkey, because out in the world a mouse binding is
+            // swallowed by vanilla's "pickblock" before any mod hotkey is
+            // reached - see CrateSweep.InitClient.
+            CrateSweep.InitClient(api);
 
             // Each feature is a load-time Harmony patch, so apply only the enabled
             // ones; toggling one off in the settings dialog takes effect on restart.
@@ -351,7 +404,8 @@ namespace SeraphsLedger
                 .SetMessageHandler<SortBackpackPacket>(OnSortBackpack)
                 .SetMessageHandler<TrashCursorPacket>(OnTrashCursor)
                 .SetMessageHandler<SortVesselPacket>(VesselSorter.OnSortPacket)
-                .SetMessageHandler<ShowTallyRegionPacket>(OnShowTallyRegion);
+                .SetMessageHandler<ShowTallyRegionPacket>(OnShowTallyRegion)
+                .SetMessageHandler<SweepCratePacket>(CrateSweep.OnSweepPacket);
 
             var cfg = SeraphsLedgerConfig.Load(api);
 
@@ -483,8 +537,11 @@ namespace SeraphsLedger
             iceCellarHarmony = null;
             barrelHarmony?.UnpatchAll(BarrelHarmonyId);
             barrelHarmony = null;
+            crateHarmony?.UnpatchAll(CrateHarmonyId);
+            crateHarmony = null;
             ClientChannel = null;
             MoveAll.Shutdown();
+            CrateSweep.Shutdown();
             configDialog = null;
             containerLedger?.Dispose();
             containerLedger = null;

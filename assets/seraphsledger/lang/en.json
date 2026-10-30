@@ -11,10 +11,13 @@
   "largebasket-title": "Large Basket Contents",
   "icecellar-chilled": "Ice-chilled cellar: {0} ice blocks ({1}% chill)",
   "icecellar-needsmore": "Ice blocks nearby: {0} — needs {1} to start chilling the cellar",
+  "blockhelp-crate-sweep": "Add every matching stack",
   "swatch-command-desc": "Mark an area and swap one building material for another",
   "swatch-hotkey-name": "Seraph's Ledger material swatch",
   "block-tallyboard-*": "Animal Tally Board",
-  "blockhelp-tallyboard-showpen": "Mark the pen it counts",
-  "blockdesc-tallyboard-*": "Hang it inside a pen. It counts the animals, henbox eggs and loose eggs within the fence, up to 100 blocks out. Look at it to read the tally.",
-  "blockhelp-tallyboard-region": "Bind/clear the marked counting region"
+  "blockhelp-tallyboard-showpen": "Outline the pen it counts",
+  "blockdesc-tallyboard-*": "Hang it on a wall or a fence post inside a pen. It counts the animals, henbox eggs and loose eggs shut in with it, up to 100 blocks out. Look at the board to read the tally.",
+  "blockhelp-tallyboard-region": "Bind the marked region, or clear the bound one",
+  "handbooktitle-tallyboard": "Using the tally board",
+  "handbooktext-tallyboard": "Hang the board on any wall or fence post that stands <strong>inside</strong> the pen. From there it walks the ground an animal could walk, out to 100 blocks and 24 up or down, and counts everything standing on it. Look at the board to read the tally: whether the pen is closed, each species broken down by kind, how many are pregnant, and the eggs in henboxes (with how many of them are fertile) against the eggs lying loose. It recounts every 10 seconds while a player is within 64 blocks.<br><br><strong>Checking the fence.</strong> <hk>rightmouse</hk>-click the board and it outlines what it is counting for 25 seconds. A closed pen is drawn in green. If the fence has a gap, the board cannot know where the pen ends - so instead it draws the trail it walked out through and marks the gap itself in blue. That blue block is the one to close.<br><br><strong>Pens with no fence.</strong> A barn, a cave, an island, a paddock left open on purpose: give the board a box to count instead of a fence to follow.<br>1. Aim at one corner of the area and type <strong>/tally mark</strong>. Aiming at nothing marks the block under your feet, so you can simply walk the corners. Each corner lights up as a pillar, and the box between them is outlined once both are set.<br>2. Aim at the opposite corner and type <strong>/tally mark</strong> again.<br>3. <hk>sneak</hk> + <hk>rightmouse</hk>-click the board. It now counts everything inside that box, fence or no fence.<br><br>The box reaches up to 128 blocks across and 64 tall, and sticks to the board until you clear it: <hk>sneak</hk> + <hk>rightmouse</hk>-click a board that holds one and it goes back to walking the fence. <strong>/tally clear</strong> forgets corners you marked but never bound to a board.<br><br><hk>seraphsledgertallyregion</hk> outlines the board you are aiming at without clicking it - handy when your hands are full of something you would rather not place. The whole feature can be turned off in the Seraph's Ledger settings (<hk>seraphsledgerconfig</hk>)."
 }

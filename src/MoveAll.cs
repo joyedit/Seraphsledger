@@ -97,7 +97,20 @@ namespace SeraphsLedger
         // it ever reaches us. So a press can never be served twice.
         private static bool OnMatchingHotkey(KeyCombination comb)
         {
-            if (!MoveMatchingEnabled || capi == null) return false;
+            if (capi == null) return false;
+
+            // The same binding, aimed at a crate out in the world instead of at a
+            // slot in a dialog: every stack of what the crate holds goes into it.
+            // Asked first because out in the world there is no hovered slot to
+            // find, so the lookup below would only bail.
+            //
+            // This serves a keyboard binding. A mouse binding never reaches any
+            // mod's hotkey out in the world - vanilla's own "pickblock" consumes
+            // the press first - so that case is served from Event.MouseDown
+            // instead. See CrateSweep.InitClient.
+            if (CrateSweep.TryRequestSweep()) return true;
+
+            if (!MoveMatchingEnabled) return false;
 
             ItemSlot hovered = capi.World?.Player?.InventoryManager?.CurrentHoveredSlot;
             if (hovered == null || hovered.Empty) return false;

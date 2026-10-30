@@ -2,6 +2,97 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.28.0 — 2026-10-29
+
+### Added
+- **Enable and disable mods from the mod list browser.** Each row carries an
+  **[enable]** / **[disable]** link. This is the one part of the game's mod
+  manager that is reachable from in-game: the state lives in the client
+  settings as `modid@version` entries, and toggling one is all the mod manager
+  itself does. It takes a restart either way, so a row changed this session is
+  marked **[enabled on restart]** / **[disabled on restart]** and the summary
+  line counts how many are waiting.
+  - **Disabling always asks twice**, and the confirmation says what it will
+    cost: the mods that depend on this one and will stop loading with it, a
+    warning if the mod declares itself part of the base game, and a reminder
+    that blocks and items it adds read as unknown in worlds built with it.
+    Enabling takes one click, since nothing is lost that way.
+  - Installing and deleting mods are deliberately left out — those move files
+    the running game is reading.
+  - Note the game pins the setting to the version, so updating a disabled mod
+    brings it back enabled. That is vanilla behaviour, kept as-is.
+
+## 1.27.0 — 2026-10-27
+
+### Added
+- **Mod list browser.** **Ctrl+Shift+N** or `.slmods` opens a sortable list of
+  every installed mod. The game's own mod manager lists them in file-name order
+  and nothing else, so this sorts by install date, declared game version,
+  available update, load order, load failures, enabled state, author or
+  description, ascending or descending — and highlights the value it sorted by
+  on each row, so the order always has something to read it against. A search
+  box filters on name, mod id, file name, author and description.
+  - **Rescan** re-reads the mod folders without a restart; **Check updates**
+    asks the mod database for the newest release of each mod tagged for this
+    game's version series and flags what you are behind on. A locally built mod
+    that is ahead of anything published says so rather than claiming to be up to
+    date. The update check is one request per mod, so it waits for the button
+    and keeps its answers for the session.
+  - The list is read-only. Enabling and disabling mods stays with the mod
+    manager, because those only take effect on a restart anyway.
+  - It is a window of its own, not sort buttons on the vanilla mod manager:
+    that screen lives in the main menu, where no mod code is running at all —
+    the game reads mod *infos* at startup but doesn't create mod systems until a
+    world loads, and the escape menu has no Mods button, so there is no moment
+    at which a mod could patch it. The underlying data is reachable from
+    in-game, and that is what the browser reads: the same mod-info and
+    dependency pass the main menu itself runs, on a mod loader of its own so the
+    live one's state and the client log are left alone.
+
+## 1.26.1 — 2026-10-24
+
+### Fixed
+- **Crate sweep by hotkey now works out in the world.** Shift + middle mouse
+  aimed at a crate did nothing, while the same binding kept working on an
+  inventory slot. Vanilla's **"pick block"** sits on the bare middle mouse
+  button, and an unmodified mouse binding is matched while *ignoring* modifiers,
+  so Shift + middle counts as a pick-block press — and its handler reports the
+  press as consumed whatever happens, which ends the hotkey dispatch before any
+  mod's hotkey is looked at. In a dialog the press never travels that far, which
+  is why the slot grids were fine all along.
+  - A mouse binding is now served from `Event.MouseDown`, which vanilla's own
+    "middle mouse button" hotkey fires *before* pick block gets its turn.
+    Marking the event handled is also what keeps the click from picking the
+    block. Keyboard bindings keep going through the hotkey handler.
+  - Aim at anything that isn't a crate holding something and the press falls
+    through untouched, so pick block still behaves as it always did.
+
+## 1.26.0 — 2026-10-23
+
+### Added
+- **Crate sweep.** One gesture puts *every* stack of what a crate holds into it,
+  taken from your hotbar and your worn bags. A crate takes one kind of thing and
+  names that kind itself, so a sweep can never put the wrong item in — which
+  makes a crate the one container where "all of this, in there" is safe to ask
+  for. Three ways to ask, each with its own switch in the settings panel:
+  - **Ctrl + Shift + right-click with an empty hand** reads the kind off the
+    crate's own contents. Vanilla does nothing whatsoever for that gesture — its
+    put path wants a full hand and Shift suppresses the take — so this fills a
+    gap rather than changing an interaction.
+  - **Ctrl + Shift + right-click holding the item** is vanilla's "add all items";
+    now the sweep carries on past the held stack and empties the rest. This one
+    does change a vanilla interaction, so it can be turned off on its own.
+  - **Shift + middle mouse** — the same "move all of one item" binding used on an
+    inventory slot — aimed at a crate sweeps it, so the one shortcut means the
+    same thing whether it is pointed at a slot or at a block. It is registered
+    even with move-matching itself switched off.
+  - An **empty** crate names no kind, so a sweep leaves it alone: put the first
+    stack in and the sweep follows it. **Retrieve-only** crates are never swept
+    into. When a crate fills up partway through, the leftovers stay in your
+    hotbar rather than in a bag.
+  - The crate's interaction help gains a line for the empty-handed gesture,
+    shown only when your hands are free.
+
 ## 1.25.0 — 2026-10-01
 
 ### Added

@@ -64,6 +64,27 @@ namespace SeraphsLedger
                 },
                 new Feature
                 {
+                    Title = "Crate sweep (empty hand)",
+                    Blurb = "Ctrl+Shift+right-click a crate with nothing held to dump every matching stack in.",
+                    Get = () => config.CrateSweepEmptyHand,
+                    Set = v => config.CrateSweepEmptyHand = v,
+                },
+                new Feature
+                {
+                    Title = "Crate sweep (holding it)",
+                    Blurb = "Ctrl+Shift+right-click keeps going past the held stack. Off is vanilla.",
+                    Get = () => config.CrateSweepHeldStack,
+                    Set = v => config.CrateSweepHeldStack = v,
+                },
+                new Feature
+                {
+                    Title = "Crate sweep by hotkey",
+                    Blurb = "The move-all-of-one-item binding, aimed at a crate, sweeps it.",
+                    Get = () => config.CrateSweepHotkey,
+                    Set = v => config.CrateSweepHotkey = v,
+                },
+                new Feature
+                {
                     Title = "Sort & Trash buttons",
                     Blurb = "Adds Sort and Trash buttons to your player inventory.",
                     Get = () => config.SortTrashButtons,
@@ -159,6 +180,13 @@ namespace SeraphsLedger
                     Blurb = "/sw mark two corners, Ctrl+Shift+M to restyle a build's material, with undo.",
                     Get = () => config.MaterialSwatch,
                     Set = v => config.MaterialSwatch = v,
+                },
+                new Feature
+                {
+                    Title = "Mod list browser",
+                    Blurb = "Ctrl+Shift+N lists installed mods, sorts them any way, and enables or disables them.",
+                    Get = () => config.ModListBrowser,
+                    Set = v => config.ModListBrowser = v,
                 },
                 new Feature
                 {

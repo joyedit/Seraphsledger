@@ -76,6 +76,28 @@ They keep the vanilla appearance, footprint, and open/close sounds.
   - Works with nothing else open, where it gathers an item between your hotbar
     and backpack. Matches on the item itself, ignoring durability and freshness,
     so a mixed-wear pile of copper axes still moves as one.
+- **Crate sweep** — one gesture puts *every* stack of what a crate holds into
+  it, out of your hotbar and your worn bags. A crate takes one kind of thing and
+  names that kind itself, so a sweep can never put the wrong item in — hold
+  nothing and it reads the kind off the crate's own contents.
+  - **Ctrl + Shift + right-click with an empty hand.** Walk up to the flint
+    crate, click, and every flint stack you are carrying goes in. Vanilla does
+    nothing at all for that gesture, so this adds a behaviour rather than
+    replacing one.
+  - **Ctrl + Shift + right-click holding the item** — vanilla puts the held
+    stack; the sweep carries on past it and empties the rest. This one *does*
+    change a vanilla interaction, so it has its own switch in the settings panel.
+  - **Shift + middle mouse** (the "move all of one item" binding above) while
+    looking at a crate does the same thing, so the one shortcut means "move all
+    of this" whether it is pointed at a slot or at a crate. Aim at anything that
+    isn't a crate with something in it and the click still picks the block, as
+    it always did.
+  - An **empty** crate has no kind yet, so a sweep leaves it alone; put the first
+    stack in — Ctrl + Shift + right-click holding it, as above — and the sweep
+    follows that stack in. Crates that are **retrieve-only** (the pre-filled ones
+    in ruins) are never swept into.
+  - When the crate fills up partway through, what is left over stays in your
+    **hotbar** rather than in a bag, where you can see it.
 - **Sort** button in the player inventory — server-authoritative sort of your
   worn-bag contents (consolidates partial stacks, orders by item).
 - **Trash** button in the player inventory — destroys whatever stack is
@@ -159,14 +181,68 @@ They keep the vanilla appearance, footprint, and open/close sounds.
 - **Silenced character voice sounds** — both the player/seraph voices and the
   trader voice (the `saxophone` greeting heard when you approach or trade).
 
+### Mod list browser
+
+**Ctrl+Shift+N** (rebindable) or `.slmods` opens a sortable list of every mod
+installed, which the game's own mod manager only ever shows in file-name order.
+Sort by any of these, ascending or descending:
+
+| Sort | Ascending order |
+| --- | --- |
+| Name | A → Z by display name |
+| Install date | Oldest file first; unreadable dates last |
+| Game version | Lowest `game` dependency first; "any version" last |
+| Update available | Not checked, then up to date, then updates |
+| Load order | The order the game loads them in, dependencies first |
+| Load problems | Loads fine first, then whatever failed and why |
+| Enabled | Disabled first, then enabled |
+| Author | A → Z; mods with no author recorded last |
+| Description | A → Z; mods with no description last |
+
+Descending reverses the chosen key but keeps the A → Z tiebreak, so rows that
+are equal stay in a readable order, and the value you sorted by is highlighted
+on every row. The search box filters on name, mod id, file name, author and
+description. `.slmods <sort> [desc]` opens the list already in that order.
+
+- **Rescan** re-reads the mod folders, so a mod dropped in while the game runs
+  shows up without a restart.
+- **Check updates** asks the mod database for the newest release of each mod
+  tagged for this game's version series, and flags the ones you are behind on.
+  Mods built locally and ahead of anything published read as *ahead of x.y.z*
+  rather than up to date. It is one request per mod, so it only ever runs when
+  you press the button, and the answers are kept for the session.
+- **Enable or disable** a mod with the `[enable]` / `[disable]` link on its row.
+  The game keeps that state in the client settings as `modid@version` entries,
+  and editing that list is the whole of what its own mod manager does on a
+  click — so it works just as well from in-game. It takes a **restart** either
+  way, so a row toggled this session reads *[enabled on restart]* or
+  *[disabled on restart]*, and the summary counts how many are waiting.
+  - **Disabling asks twice.** The confirmation names the mods that depend on
+    this one and will stop loading with it, warns if the mod declares itself
+    part of the base game, and reminds you that blocks and items it adds read
+    as unknown in worlds built with it. Enabling takes one click.
+  - Installing and deleting mods are left to the game's mod manager — those
+    move files the running game is reading.
+  - The setting is pinned to the version, so updating a disabled mod brings it
+    back enabled. That is the game's own behaviour, kept as-is.
+
+> It is a window of its own rather than sort buttons on the game's mod manager
+> because that screen (`GuiScreenMods`) exists only in the main menu, and no mod
+> code is running there — the game reads mod *infos* at startup but does not
+> create mod systems until a world loads, and the escape menu has no Mods
+> button. So there is no moment at which a mod could patch that list. What sits
+> *behind* it is reachable from in-game, which is what this uses: the same
+> mod-info + dependency pass the main menu runs, against a mod loader of its
+> own, and the same `ClientSettings.DisabledMods` list for the switches.
+
 ### Settings panel
 
 - **Toggle features on or off in-game** — press **Ctrl+Shift+L** (rebindable) or
   run `.slconfig` to open a settings window with a switch per feature: trader
-  ledger, ctrl+click move-all, move all of one item, Sort/Trash buttons,
-  creative search auto-focus,
+  ledger, ctrl+click move-all, move all of one item, the three crate sweeps,
+  Sort/Trash buttons, creative search auto-focus,
   enemy fast-despawn, large containers, silenced voices, barrel ingredient
-  portions, and the distance challenge. Choices are saved to `ModConfig/seraphsledger/features.json`.
+  portions, the mod list browser, and the distance challenge. Choices are saved to `ModConfig/seraphsledger/features.json`.
   - **A restart is required** for changes to take effect — the features are wired
     up at load time (Harmony patches, hotkeys, event handlers, recipe/asset
     gating), so the window warns you of this.

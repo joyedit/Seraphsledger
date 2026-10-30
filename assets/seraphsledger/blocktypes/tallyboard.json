@@ -1,6 +1,13 @@
 {
 	code: "tallyboard",
 	class: "SeraphsLedgerTallyBoard",
+	attributes: {
+		handbook: {
+			extraSections: [
+				{ title: "seraphsledger:handbooktitle-tallyboard", text: "seraphsledger:handbooktext-tallyboard" }
+			]
+		}
+	},
 	entityClass: "SeraphsLedgerTallyBoard",
 	behaviors: [{ name: "HorizontalAttachable" }],
 	variantgroups: [
