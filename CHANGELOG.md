@@ -2,6 +2,17 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.28.1 — 2026-10-30
+
+### Fixed
+- **The scrollbar now lines up with the list frame.** In the mod list browser
+  and the trader ledger the bar was built from the clip rectangle while the
+  frame around it is that rectangle grown by 3 on every side, so the bar stopped
+  3px short of the frame at the top and at the bottom — plain to see at the
+  bottom-right corner. Both bars are now sized from the frame itself, through
+  the engine's own `ElementStdBounds.VerticalScrollbar` helper, so they keep
+  meeting its corners whatever the list is resized to.
+
 ## 1.28.0 — 2026-10-29
 
 ### Added

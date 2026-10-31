@@ -4,7 +4,7 @@ A personal bundle of small quality-of-life tweaks for Vintage Story.
 
 - **Mod ID:** `seraphsledger`
 - **Author:** Feyd
-- **Version:** 1.8.0
+- **Version:** 1.28.1
 
 ## Features
 

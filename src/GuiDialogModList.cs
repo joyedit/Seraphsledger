@@ -84,7 +84,11 @@ namespace SeraphsLedger
             ElementBounds clipBounds = ElementBounds.Fixed(0, listTop, ListW, ListH);
             ElementBounds insetBounds = clipBounds.FlatCopy().FixedGrow(3);
             ElementBounds textBounds = ElementBounds.Fixed(0, 0, ListW - 10, ListH);
-            ElementBounds scrollBounds = ElementBounds.Fixed(ListW + 6, listTop, 20, ListH);
+            // Hung off the inset, not the clip: the inset is the clip grown by 3
+            // on every side, so a bar sized to the clip stops 3px short of the
+            // frame's top and bottom corners. The engine's own helper puts it
+            // beside the box it is given and matches its height exactly.
+            ElementBounds scrollBounds = ElementStdBounds.VerticalScrollbar(insetBounds);
 
             ElementBounds bgBounds = ElementBounds.FixedSize(0, 0);
             bgBounds.BothSizing = ElementSizing.FitToChildren;

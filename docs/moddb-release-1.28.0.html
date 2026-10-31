@@ -1,0 +1,27 @@
+<!-- Changelog for the ModDB release form (1.28.0). The last published release
+     was 1.26.0, so this covers 1.26.1, 1.27.0 and 1.28.0. -->
+<p><strong>New in 1.28.0 &mdash; the mod list browser</strong></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;"><strong>Ctrl+Shift+N</strong> (rebindable) or <strong>.slmods</strong> opens a sortable list of every mod you have installed. The game&rsquo;s own mod manager lists them in file-name order and nothing else; this one sorts by <strong>install date, declared game version, available update, load order, load failures, enabled state, author or description</strong>, ascending or descending, and highlights the value it sorted by on each row so the order always has something to read it against. A search box filters on name, mod id, file name, author and description.</p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Enable and disable mods from the list.</strong> Each row carries an <strong>[enable]</strong> / <strong>[disable]</strong> link. It takes a restart either way, so a row you changed this session reads <strong>[enabled on restart]</strong> / <strong>[disabled on restart]</strong> and the summary line counts how many are waiting.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Disabling asks twice, and says what it will cost</strong> &mdash; the mods that depend on this one and will stop loading with it, a warning if the mod declares itself part of the base game, and a reminder that blocks and items it adds read as unknown in worlds built with it. Enabling takes one click, since nothing is lost that way.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Rescan</strong> re-reads the mod folders without a restart. <strong>Check updates</strong> asks the mod database for the newest release of each mod tagged for this game&rsquo;s version series and flags what you are behind on; a locally built mod that is ahead of anything published says so rather than claiming to be up to date. It is one request per mod, so it waits for the button and keeps its answers for the session.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Installing and deleting mods are deliberately left out</strong> &mdash; those move files the running game is reading. Note too that the game pins the enabled/disabled setting to the mod&rsquo;s version, so updating a disabled mod brings it back enabled; that is vanilla behaviour, kept as it is.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">It is a window of its own rather than sort buttons on the vanilla mod manager, because that screen lives in the main menu where no mod code is running at all. The data behind it <em>is</em> reachable from in-game, and that is what the browser reads: the same mod-info and dependency pass the main menu itself runs, on a mod loader of its own, so the live one&rsquo;s state and the client log are left alone.</p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<p><strong>Fixed in 1.26.1 &mdash; crate sweep by hotkey out in the world</strong></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;"><strong>Shift + middle mouse</strong> aimed at a crate did nothing, while the same binding kept working on an inventory slot. Vanilla&rsquo;s <strong>pick block</strong> sits on the bare middle mouse button and is matched while <em>ignoring</em> modifiers, so Shift + middle counted as a pick-block press and ended the hotkey dispatch before any mod was asked. Mouse bindings are now served earlier, before pick block gets its turn; keyboard bindings are unchanged. Aim at anything that isn&rsquo;t a crate holding something and the press falls through untouched, so pick block still behaves as it always did.</p>
+<p>&nbsp;</p>
+<p><strong>If you are coming from 1.26.0 or earlier</strong></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">1.27.0 added the mod list browser as a read-only list; 1.28.0 is what added enabling and disabling. Both are in this build. Everything else is unchanged, and the new feature has its own switch (<strong>Mod list browser</strong>) in the settings panel on <strong>Ctrl+Shift+L</strong>.</p>

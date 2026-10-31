@@ -2,8 +2,28 @@
 <p style="line-height: 100%; margin-bottom: 0.03in;">&nbsp;</p>
 <p style="line-height: 100%; margin-bottom: 0.04in;"><span style="color: #555555;"><span style="font-size: medium;"><em>A personal bundle of small quality-of-life tweaks for Vintage Story.</em></span></span></p>
 <p style="line-height: 100%; margin-bottom: 0.14in; border-top: none; border-bottom: 1.50pt solid #2e4a62; border-left: none; border-right: none; padding: 0in 0in 0.08in 0in;"><br /><br /></p>
-<p style="line-height: 0.19in; margin-bottom: 0.08in;">The Seraph&rsquo;s Ledger gathers a handful of independent conveniences into one mod &mdash; a trader-tracking ledger, larger storage containers, inventory shortcuts, automatic enemy loot, a material swatch tool for builders, barrel ingredient portions, a tally board that counts the animals in a pen, and a few audio/UI tweaks. Every runtime feature can be switched on or off individually from an in-game settings panel, so you can run the whole bundle or just the parts you want.</p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">The Seraph&rsquo;s Ledger gathers a handful of independent conveniences into one mod &mdash; a trader-tracking ledger, larger storage containers, inventory shortcuts, automatic enemy loot, a material swatch tool for builders, barrel ingredient portions, a tally board that counts the animals in a pen, a sortable browser for your installed mods, and a few audio/UI tweaks. Every runtime feature can be switched on or off individually from an in-game settings panel, so you can run the whole bundle or just the parts you want.</p>
 <h2 class="western">What it does</h2>
+<p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Mod list browser</strong></span></span></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;"><strong>Ctrl+Shift+N</strong> (rebindable) or <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">.slmods</span></span></span> opens a sortable list of every mod you have installed. The game&rsquo;s own mod manager lists them in file-name order and nothing else; this one sorts by <strong>install date, declared game version, available update, load order, load failures, enabled state, author or description</strong>, ascending or descending, and highlights the value it sorted by on each row, so the order always has something to read it against. A search box filters on name, mod id, file name, author and description.</p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Enable and disable mods from the list.</strong> Each row carries an <strong>[enable]</strong> / <strong>[disable]</strong> link &mdash; the one part of the game&rsquo;s mod manager that is reachable from in-game. It takes a restart either way, so a row you changed this session reads <strong>[enabled on restart]</strong> / <strong>[disabled on restart]</strong> and the summary line counts how many are waiting.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Disabling asks twice, and says what it will cost</strong> &mdash; the mods that depend on this one and will stop loading with it, a warning if the mod declares itself part of the base game, and a reminder that blocks and items it adds read as unknown in worlds built with it. Enabling takes one click, since nothing is lost that way.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Rescan</strong> re-reads the mod folders without a restart. <strong>Check updates</strong> asks the mod database for the newest release of each mod tagged for this game&rsquo;s version series and flags what you are behind on; a locally built mod that is ahead of anything published says so rather than claiming to be up to date. It is one request per mod, so it waits for the button and keeps its answers for the session.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Installing and deleting mods are deliberately left out</strong> &mdash; those move files the running game is reading. The game also pins the enabled/disabled setting to the mod&rsquo;s version, so updating a disabled mod brings it back enabled; that is vanilla behaviour, kept as it is.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">It is a window of its own rather than sort buttons on the vanilla mod manager, because that screen lives in the main menu where no mod code is running at all. The data behind it <em>is</em> reachable from in-game, and that is what the browser reads: the same mod-info and dependency pass the main menu itself runs, on a mod loader of its own, so the live one&rsquo;s state and the client log are left alone.</p>
+</li>
+</ul>
 <p>&nbsp;</p>
 <p><strong>Ice-Cooled Cellars</strong></p>
 <p>Keep your food twice as long by stocking your cellar with ice.</p>
@@ -106,6 +126,26 @@
 </li>
 </ul>
 <p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Large container rescue</strong></span></span></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">A large container holds more slots than the vanilla block entity defaults to, and that count lives in the block &mdash; so a save loaded <em>once</em> without this mod trims every large container it touches to 16 slots and drops the rest for good. No error, no log line, just an emptier trunk. The game does that itself, before any mod gets a say, and it is the same for every mod that widens a container. This feature is the net under it.</p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">The mod keeps a copy of each large container&rsquo;s contents in the <strong>savegame&rsquo;s own mod data</strong>, which the game loads and writes back untouched for mods that aren&rsquo;t installed &mdash; so the record survives exactly the thing that destroys the container.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">When a container comes back from disk short of what the record says it held, <strong>the items go straight back in</strong> and you get a chat line saying so. That happens only when the shortfall carries the engine&rsquo;s own fingerprint: nothing left at or past slot 16, where the trimming always cuts, while the record had something there. A container that is merely emptier than the record &mdash; which is what your own hand looks like &mdash; is never refilled on its own; it is held for you to decide.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong><span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">/sl rescue</span></span></span></strong> lists anything held back and <strong><span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">/sl rescue 2</span></span></span></strong> puts that one back; <strong><span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">/sl forget 2</span></span></span></strong> drops an entry and <strong><span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">/sl status</span></span></span></strong> says what is on record against what it can see right now. Restoring only ever fills empty slots, so it can add to a container but never overwrite what is in it now.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Matching is by contents rather than by slot, so sorting a container is never mistaken for a loss, and the record is refreshed on every world save, in the same pass that writes the chunks.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">It cannot recover a container that was already trimmed before version 1.25.0 &mdash; there was no record to keep.</p>
+</li>
+</ul>
+<p>&nbsp;</p>
 <p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Sort by freshness (Large Storage Vessel)</strong></span></span></p>
 <p style="line-height: 0.19in; margin-bottom: 0.08in;">A vessel full of crocks tells you nothing about which one to open next. The <strong>Sort by freshness</strong> button under the Large Storage Vessel&rsquo;s grid lays the vessel out as a larder, in the order you should eat it:</p>
 <ul>
@@ -120,6 +160,23 @@
 </li>
 <li>
 <p style="line-height: 0.19in; margin-bottom: 0.06in;">The sort runs <strong>on the server</strong>, for the player who has that vessel open, so it&rsquo;s safe in multiplayer. Hovering the button explains the order; the hover text has its own switch if you&rsquo;d rather not have it.</p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<p style="line-height: 100%; margin-top: 0.14in; margin-bottom: 0.06in;"><span style="color: #1a1a1a;"><span style="font-size: medium;"><strong>Crate sweep</strong></span></span></p>
+<p style="line-height: 0.19in; margin-bottom: 0.08in;">One gesture puts <em>every</em> stack of what a crate holds into it, taken from your hotbar and your worn bags. A crate takes one kind of thing and names that kind itself, so a sweep can never put the wrong item in &mdash; which makes a crate the one container where &ldquo;all of this, in there&rdquo; is safe to ask for. Three ways to ask, each with its own switch:</p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Ctrl + Shift + right-click with an empty hand</strong> reads the kind off the crate&rsquo;s own contents. Vanilla does nothing whatsoever for that gesture, so this fills a gap rather than changing an interaction.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Ctrl + Shift + right-click holding the item</strong> is vanilla&rsquo;s &ldquo;add all items&rdquo;; the sweep now carries on past the held stack and empties the rest. This one does change a vanilla interaction, so it can be turned off on its own.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Shift + middle mouse</strong> &mdash; the same &ldquo;move all of one item&rdquo; binding used on an inventory slot &mdash; aimed at a crate sweeps it, so the one shortcut means the same thing whether it is pointed at a slot or at a block.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">An <strong>empty</strong> crate names no kind, so a sweep leaves it alone: put the first stack in and the sweep follows it. <strong>Retrieve-only</strong> crates are never swept into, and when a crate fills up partway through, the leftovers stay in your hotbar rather than in a bag.</p>
 </li>
 </ul>
 <p>&nbsp;</p>
@@ -182,24 +239,67 @@
 <p style="line-height: 0.19in; margin-bottom: 0.06in;">Trader ledger</p>
 </li>
 <li>
-<p style="line-height: 0.19in; margin-bottom: 0.06in;">Ctrl+click move-all</p>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Ctrl + click move-all</p>
 </li>
 <li>
-<p style="line-height: 0.19in; margin-bottom: 0.06in;">Sort / Trash buttons</p>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Move all of one item</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Crate sweep (empty hand)</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Crate sweep (holding it)</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Crate sweep by hotkey</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Sort &amp; Trash buttons</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Large vessel sort</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Large vessel sort tooltip</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Large container rescue</p>
 </li>
 <li>
 <p style="line-height: 0.19in; margin-bottom: 0.06in;">Creative search auto-focus</p>
 </li>
 <li>
-<p style="line-height: 0.19in; margin-bottom: 0.06in;">Enemy fast-despawn</p>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Enemy fast-despawn &amp; loot</p>
 </li>
-<li>Large Containers</li>
-<li>Silenced Voices</li>
-<li>Ice-cooled cellars</li>
-<li>Material swatch tool</li>
-<li>Barrel ingredient portions</li>
-<li>Large vessel sort (and its hover text)</li>
-<li>Animal tally board</li>
-<li>Distance challenge</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Auto-loot all animals</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Auto-loot leaves a carcass</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Large containers</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Silenced voices</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Ice-cooled cellars</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Barrel ingredient portions</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Animal tally board</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Material swatch tool</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Mod list browser</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">Distance challenge</p>
+</li>
 </ul>
 <p style="line-height: 0.19in; margin-top: 0.08in; margin-bottom: 0.08in;">Your choices are saved to <span style="color: #2e4a62;"><span style="font-family: Consolas, serif;"><span style="font-size: small;">ModConfig/seraphsledger/features.json</span></span></span>. <strong>A restart is required</strong> for changes to take effect &mdash; these features are wired up at load time (Harmony patches, hotkeys, event handlers), so the panel warns you of this.</p>
