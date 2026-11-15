@@ -148,6 +148,13 @@ namespace SeraphsLedger
                 },
                 new Feature
                 {
+                    Title = "Bigger fuel stacks",
+                    Blurb = "Firewood, aged firewood & peat bricks stack to 64, for firepit loads that last twice as long.",
+                    Get = () => config.BiggerFuelStacks,
+                    Set = v => config.BiggerFuelStacks = v,
+                },
+                new Feature
+                {
                     Title = "Silenced voices",
                     Blurb = "Mutes the chattering voice sounds of the player and traders.",
                     Get = () => config.SilencedVoices,
@@ -173,6 +180,13 @@ namespace SeraphsLedger
                     Blurb = "Chalkboard that counts the animals and eggs inside its pen's fence.",
                     Get = () => config.AnimalTally,
                     Set = v => config.AnimalTally = v,
+                },
+                new Feature
+                {
+                    Title = "Milk-ready markers",
+                    Blurb = "Tally board marks the animals ready to milk while you stand in its pen.",
+                    Get = () => config.AnimalTallyMilkMarkers,
+                    Set = v => config.AnimalTallyMilkMarkers = v,
                 },
                 new Feature
                 {

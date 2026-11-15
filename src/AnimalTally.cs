@@ -52,6 +52,16 @@ namespace SeraphsLedger
         private int henboxes;
         private Dictionary<string, int> animals = new Dictionary<string, int>();
         private Dictionary<string, int> pregnant = new Dictionary<string, int>();
+        private Dictionary<string, int> milkable = new Dictionary<string, int>();
+
+        // Entity ids of the ready-to-milk animals from the last scan, for the
+        // markers. Server-side only; never saved and never synced in the tree -
+        // they are sent to the players standing in the pen instead.
+        private readonly List<long> milkableIds = new List<long>();
+
+        // Set from the config at server start, like ScanEnabled. Off (the
+        // default) leaves the count in place and sends no markers.
+        internal static bool MilkMarkersEnabled;
 
         // When set, the board counts this box instead of walking the fence. The
         // walk has to guess where a pen ends and says so when it can't; a marked
@@ -102,6 +112,8 @@ namespace SeraphsLedger
         {
             animals = new Dictionary<string, int>();
             pregnant = new Dictionary<string, int>();
+            milkable = new Dictionary<string, int>();
+            milkableIds.Clear();
             eggsInBoxes = eggsFertile = eggsLoose = henboxes = 0;
 
             if (HasRegion) ScanRegion();
@@ -134,6 +146,8 @@ namespace SeraphsLedger
             {
                 CountEntity(entity);
             }
+
+            SendMilkMarkers(pos => InRegion(new BlockPos((int)Math.Floor(pos.X), (int)Math.Floor(pos.Y), (int)Math.Floor(pos.Z))));
         }
 
         private bool InRegion(BlockPos pos) =>
@@ -179,6 +193,17 @@ namespace SeraphsLedger
                 pregnant.TryGetValue(species, out int p);
                 pregnant[species] = p + 1;
             }
+
+            // Milkable today: lactating and not milked in the last day. Same
+            // one-line-per-species treatment as pregnancy, and for the same
+            // reason - only the cows that have calved can be in it.
+            if (MilkReady.IsReady(entity))
+            {
+                string species = SpeciesOf(code);
+                milkable.TryGetValue(species, out int m);
+                milkable[species] = m + 1;
+                milkableIds.Add(entity.EntityId);
+            }
         }
 
         private void ScanWalk()
@@ -213,6 +238,32 @@ namespace SeraphsLedger
             {
                 if (!InPen(pen, entity.Pos.XYZ)) continue;
                 CountEntity(entity);
+            }
+
+            SendMilkMarkers(pos => InPen(pen, pos));
+        }
+
+        // Marks the ready-to-milk animals for the players standing inside what
+        // this board counts - the pen when it is closed, the radius when it is
+        // not, the box when one is marked.
+        //
+        // Sent on the scan beat and only to those players: a board nobody is
+        // standing in costs nothing, and a player outside the fence gets no
+        // packet, so their markers go stale and stop on their own. The payload
+        // is entity ids, a handful of longs.
+        private void SendMilkMarkers(System.Func<Vec3d, bool> inside)
+        {
+            if (!MilkMarkersEnabled) return;
+            if (!(Api is ICoreServerAPI sapi)) return;
+
+            long[] payload = milkableIds.ToArray();
+            foreach (IPlayer player in Api.World.AllOnlinePlayers)
+            {
+                if (!(player is IServerPlayer sp) || player.Entity == null) continue;
+                if (!inside(player.Entity.Pos.XYZ)) continue;
+
+                sapi.Network.GetChannel(SeraphsLedgerModSystem.NetworkChannelName)
+                    .SendPacket(new MilkMarkerPacket { EntityIds = payload }, sp);
             }
         }
 
@@ -497,6 +548,9 @@ namespace SeraphsLedger
             var pg = new TreeAttribute();
             foreach (var kv in pregnant) pg.SetInt(kv.Key, kv.Value);
             t["pregnant"] = pg;
+            var mk = new TreeAttribute();
+            foreach (var kv in milkable) mk.SetInt(kv.Key, kv.Value);
+            t["milkable"] = mk;
             t.SetBool("hasRegion", HasRegion);
             if (HasRegion)
             {
@@ -526,6 +580,11 @@ namespace SeraphsLedger
             if (t["pregnant"] is ITreeAttribute pg)
             {
                 foreach (var kv in pg) pregnant[kv.Key] = pg.GetInt(kv.Key);
+            }
+            milkable = new Dictionary<string, int>();
+            if (t["milkable"] is ITreeAttribute mk)
+            {
+                foreach (var kv in mk) milkable[kv.Key] = mk.GetInt(kv.Key);
             }
             if (t.GetBool("hasRegion"))
             {
@@ -585,6 +644,19 @@ namespace SeraphsLedger
                 foreach (var kv in pregnant) total += kv.Value;
                 dsc.AppendLine($"Pregnant: {total}");
                 dsc.AppendLine(Subline(string.Join(" · ", pregnant
+                    .OrderByDescending(kv => kv.Value)
+                    .Select(kv => $"{SpeciesName(kv.Key)} {kv.Value}"))));
+            }
+
+            // Same shape as the pregnancy line, and separate for the same
+            // reason: only the cows that have calved can be in it, so folding
+            // it into the per-kind breakdown would count them twice.
+            if (milkable.Count > 0)
+            {
+                int total = 0;
+                foreach (var kv in milkable) total += kv.Value;
+                dsc.AppendLine($"Ready to milk: {total}");
+                dsc.AppendLine(Subline(string.Join(" · ", milkable
                     .OrderByDescending(kv => kv.Value)
                     .Select(kv => $"{SpeciesName(kv.Key)} {kv.Value}"))));
             }

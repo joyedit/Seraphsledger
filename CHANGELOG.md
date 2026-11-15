@@ -2,6 +2,106 @@
 
 All notable changes to The Seraph's Ledger are documented here.
 
+## 1.30.1 — 2026-11-15
+
+### Changed
+- **Packaging only — the code is identical to 1.30.0.** The 1.30.0 upload was the
+  Debug build that 'deploy.sh' writes to the live Mods folder, rather than a
+  Release build. Same dll contents, but compiled without the optimiser and with
+  JIT debug tracking on. This release is the same source built in Release
+  configuration. Nothing to read about and nothing to change: if you are already
+  running 1.30.0 it behaves the same, a little slower.
+
+## 1.30.0 — 2026-11-15
+
+### Added
+- **The tally board counts the animals ready to milk.** A new line, 'Ready to
+  milk: 3', with the per-species breakdown under it, alongside the pregnancy
+  line and read the same way: only the cows that have calved can be in it, so
+  it is a summary rather than part of the per-kind list.
+  - Ready means what vanilla means by it: lactating (within 21 days of calving,
+    or whatever the entity's own 'lactatingDaysAfterBirth' says) and not milked
+    in the last day. Vanilla's gate, 'EntityBehaviorMilkable.CanMilk', is
+    protected, so those conditions are mirrored rather than called.
+  - Stress is deliberately left out of the count. It is transient — an animal
+    you have just walked through reads as un-milkable for a minute — and on the
+    board's 10-second beat it would make the number flicker while a herd
+    settles. The board answers "what could I go and milk today"; the stress
+    check still applies at the moment you try.
+- **Floating markers over the ready animals**, off by default. Stand inside
+  what a board counts and each ready animal wears a small milk-white plume.
+  - The server sends the marked animals to the players standing in that board's
+    pen on its own scan beat, as a handful of entity ids. Walk out and the
+    packets stop, so the markers go stale and fade on their own.
+  - The client re-checks each one every 400ms against the same readiness test,
+    reading the synced watched attributes, so an animal you milk loses its
+    marker at once rather than at the next beat up to 10 seconds later.
+  - **Not an outline round the animal, and that is an engine limit rather than
+    a shortcut.** Vintage Story offers shaded highlights for blocks
+    ('World.HighlightBlocks') and for nothing else; a real silhouette means
+    re-rendering the animal's mesh with a flat shader through a render patch,
+    which is fragile across engine updates for the sake of a cosmetic.
+  - Toggle: **Milk-ready markers** in Ctrl+Shift+L, or 'AnimalTallyMilkMarkers'
+    in features.json. Needs the tally board itself to be on, and both the
+    server and the client have to want them.
+
+## 1.29.1 — 2026-11-14
+
+### Added
+- **Peat bricks too, and the fuel list is yours now.** Peat was the fuel this
+  missed: it declares 'maxStackSize: 32' where firewood spells the same key in
+  lower case, so the first pass walked straight past it. Peat bricks now stack
+  to 64 like the rest.
+  - Which codes count as fuel is 'FuelStackCodes' in features.json, matched on
+    the first part of the code, so every variant follows (coal-contaminated
+    with coal) in any domain — a modded firewood is raised alongside the
+    vanilla one. Default list: firewood, aged firewood, peat bricks, charcoal,
+    coal, coke.
+  - Blocks as well as items are covered now. Peat bricks are a block, charcoal
+    is an item, and the first pass only walked the item registry.
+  - A listed code still has to have a burn temperature before anything is
+    changed, so a name collision with another mod's item can't be swept up.
+  - Still a list rather than everything that burns: 197 vanilla assets have a
+    burn temperature, including beds, barrels, baskets, armour stands,
+    candles, mannequins, waterwheels, windmill rotors and every wooden gear,
+    which stack to 1, 4 or 16 by design. 'log' (16) and 'planks' (32) are left
+    out as building stock rather than fuel — add them to the list if you want
+    them.
+
+## 1.29.0 — 2026-11-14
+
+### Added
+- **Bigger fuel stacks, so a firepit can be loaded for longer.** Firewood and
+  aged firewood now stack to 64 instead of 32, which is what charcoal, coal and
+  coke have always stacked to. A full wood load burns about 26 minutes instead
+  of 13.
+  - A firepit never had a fuel limit of its own: its fuel slot takes 999999 and
+    it burns one item at a time, so what capped a load was firewood's own stack
+    size. This raises that, which means firewood stacks to 64 everywhere — bags,
+    chests, crates. Firewood piles on the ground are unchanged at 32; that
+    number is the ground-storable behaviour's own, not the item's.
+  - Only fuels below the configured size are touched, so the default of 64
+    leaves charcoal, coal and coke at vanilla. Set 'FuelStackSize' to 128 and
+    the whole list goes there; it accepts 32 to 999.
+  - In multiplayer the server's setting is the one that applies: it sends its
+    block and item definitions, stack size included, to every client on
+    connect, after the client has loaded its own.
+  - Toggle: **Bigger fuel stacks** in Ctrl+Shift+L, or 'BiggerFuelStacks' in
+    features.json. On by default.
+
+## 1.28.2 — 2026-11-11
+
+### Changed
+- **Auto-loot of animals is quicker.** A deer, sheep or pig you kill is now
+  butchered 7 seconds after death instead of 10 — about 30% off the wait, which
+  was long enough to stand around for. The window is still there to change your
+  mind or open the carcass by hand yourself before the mod touches it, and
+  'AutoLootDelaySeconds' still takes any value from 1 to 300 if you want it
+  faster or slower. Hostiles are unchanged at their fixed 2 seconds.
+  - An existing features.json keeps the delay it already has; set
+    'AutoLootDelaySeconds' to 7 there, or delete the line, to pick up the new
+    default.
+
 ## 1.28.1 — 2026-10-30
 
 ### Fixed
@@ -10,7 +110,7 @@ All notable changes to The Seraph's Ledger are documented here.
   frame around it is that rectangle grown by 3 on every side, so the bar stopped
   3px short of the frame at the top and at the bottom — plain to see at the
   bottom-right corner. Both bars are now sized from the frame itself, through
-  the engine's own `ElementStdBounds.VerticalScrollbar` helper, so they keep
+  the engine's own 'ElementStdBounds.VerticalScrollbar' helper, so they keep
   meeting its corners whatever the list is resized to.
 
 ## 1.28.0 — 2026-10-29
@@ -19,7 +119,7 @@ All notable changes to The Seraph's Ledger are documented here.
 - **Enable and disable mods from the mod list browser.** Each row carries an
   **[enable]** / **[disable]** link. This is the one part of the game's mod
   manager that is reachable from in-game: the state lives in the client
-  settings as `modid@version` entries, and toggling one is all the mod manager
+  settings as 'modid@version' entries, and toggling one is all the mod manager
   itself does. It takes a restart either way, so a row changed this session is
   marked **[enabled on restart]** / **[disabled on restart]** and the summary
   line counts how many are waiting.
@@ -36,7 +136,7 @@ All notable changes to The Seraph's Ledger are documented here.
 ## 1.27.0 — 2026-10-27
 
 ### Added
-- **Mod list browser.** **Ctrl+Shift+N** or `.slmods` opens a sortable list of
+- **Mod list browser.** **Ctrl+Shift+N** or '.slmods' opens a sortable list of
   every installed mod. The game's own mod manager lists them in file-name order
   and nothing else, so this sorts by install date, declared game version,
   available update, load order, load failures, enabled state, author or
@@ -71,7 +171,7 @@ All notable changes to The Seraph's Ledger are documented here.
   press as consumed whatever happens, which ends the hotkey dispatch before any
   mod's hotkey is looked at. In a dialog the press never travels that far, which
   is why the slot grids were fine all along.
-  - A mouse binding is now served from `Event.MouseDown`, which vanilla's own
+  - A mouse binding is now served from 'Event.MouseDown', which vanilla's own
     "middle mouse button" hotkey fires *before* pick block gets its turn.
     Marking the event handled is also what keeps the click from picking the
     block. Keyboard bindings keep going through the hotkey handler.
@@ -124,10 +224,10 @@ All notable changes to The Seraph's Ledger are documented here.
     record had something there. A container that is merely emptier than the
     record — which is what your own hand looks like — is never refilled on its
     own; it is held for you to decide.
-  - **`/sl rescue`** lists anything held back and **`/sl rescue 2`** puts that
-    one back; **`/sl forget 2`** drops an entry. Restoring only ever fills empty
+  - **'/sl rescue'** lists anything held back and **'/sl rescue 2'** puts that
+    one back; **'/sl forget 2'** drops an entry. Restoring only ever fills empty
     slots, so it can add to a container but never overwrite what is in it now.
-  - **`/sl status`** says what is on record and what it can see right now.
+  - **'/sl status'** says what is on record and what it can see right now.
   - Matching is by contents, not by slot, so sorting a container (with this
     mod's own Sort buttons, say) is never mistaken for a loss.
   - The record is refreshed on every world save, in the same pass that writes the
@@ -142,7 +242,7 @@ All notable changes to The Seraph's Ledger are documented here.
   right-click.** The engine discards a block entity whose class it cannot
   instantiate, so loading a save without this mod leaves the boards standing on
   the wall with nothing behind them and no way back. The board now hangs a new
-  one on first contact, and says `Right-click to start this board counting.`
+  one on first contact, and says 'Right-click to start this board counting.'
   until you do. A bound counting region is the one thing not recoverable — mark
   and bind it again.
 
@@ -197,27 +297,27 @@ All notable changes to The Seraph's Ledger are documented here.
 
 ### Fixed
 - **The tally board's breakdown line no longer runs off the edge of the
-  tooltip** (`Hen 18 · Rooster 14 · Pullet 2 · Cockerel 1` was losing its last
+  tooltip** ('Hen 18 · Rooster 14 · Pullet 2 · Cockerel 1' was losing its last
   character). The breakdown lines were indented with spaces, and the block-info
   box sizes itself to the widest line using ink extents — which leave leading
   spaces out of the width but still draw them, so an indented line overhangs by
   exactly its indent. They're dimmed instead of indented now, which reads the
   same and measures honestly.
 - **Binding a tally board to a marked region now puts the marks out.** The
-  corner pillars and the violet box stayed lit over the pen after `sneak +
-  right-click` bound them, until you thought to run `/tally clear` — which read
+  corner pillars and the violet box stayed lit over the pen after 'sneak +
+  right-click' bound them, until you thought to run '/tally clear' — which read
   as the binding not having taken. The corners are forgotten the moment a board
   takes the box.
 - **The tally board counts eggs laid on the floor.** A hen with no henbox free
   lays where she stands, and that lands as a *block* rather than a dropped
-  item — so the board kept reporting `0 loose` with eggs plainly sitting on
+  item — so the board kept reporting '0 loose' with eggs plainly sitting on
   the floorboards. Floor eggs now count, singly or in piles of two and three;
   a broken one counts for nothing, being a mess rather than an egg.
 - **A marked region now reaches the ground under its footprint.** Two corners
   marked at the same height grew the box upward to whatever stood in the
   footprint, but pinned its floor at the height you happened to be standing —
   so marking a pen from the wall top, or from the barn floor above it, left the
-  animals down in the pen outside the box and the board saying `No animals`. A
+  animals down in the pen outside the box and the board saying 'No animals'. A
   henbox up at marking height still counted, which made it look like the region
   was being ignored rather than floating above the pen. The floor now drops to
   the lowest ground in the footprint, up to 16 blocks below where you marked.
@@ -225,19 +325,19 @@ All notable changes to The Seraph's Ledger are documented here.
   stacked coop.
   - **Boards already bound keep their old box** — re-mark and re-bind to pick
     up the new floor.
-- **The region's height is now on the label.** `Region: 22 x 37, Y 173-183`
-  instead of `22 x 7 x 37`, in the tooltip and in the `/tally mark` reply: when
+- **The region's height is now on the label.** 'Region: 22 x 37, Y 173-183'
+  instead of '22 x 7 x 37', in the tooltip and in the '/tally mark' reply: when
   a board counts nothing, where the box's floor sits is the first thing worth
   seeing.
 
 ## 1.22.1 — 2026-09-22
 
 ### Added
-- **Marked corners glow.** `/tally mark` now lights the block you marked as a
+- **Marked corners glow.** '/tally mark' now lights the block you marked as a
   pillar — green for the first corner, amber for the second — and once both
   are set the box they describe is outlined in violet, so you can see what
   you're about to bind before you bind it. Same shapes the swatch tool uses,
-  so a marked pen reads like a marked build. `/tally clear` puts them out.
+  so a marked pen reads like a marked build. '/tally clear' puts them out.
 - **Ctrl+Shift+X while looking at a tally board** outlines what it counts,
   without having to right-click it. Rebindable under Controls as "Show tally
   board region". Bound boards show the region, unbound ones show the pen walk
@@ -247,7 +347,7 @@ All notable changes to The Seraph's Ledger are documented here.
 
 ### Added
 - **The tally board can count a region you mark, instead of working the pen
-  out for itself.** `/tally mark` a corner, `/tally mark` the opposite one,
+  out for itself.** '/tally mark' a corner, '/tally mark' the opposite one,
   then sneak + right-click a board to bind it. Sneak + right-click again
   clears it and the board goes back to walking the fence.
   - The walk has to guess where a pen ends, and says so when it can't — a
@@ -257,7 +357,7 @@ All notable changes to The Seraph's Ledger are documented here.
     stands in the footprint, so you walk the corners of a pen at ground level
     rather than flying up to the fence tops. Corners at different heights are
     taken literally, for a loft or a stacked coop.
-  - The tooltip shows `Region: 41 x 12 x 26 (marked)` in place of the
+  - The tooltip shows 'Region: 41 x 12 x 26 (marked)' in place of the
     open/closed line, and right-click outlines the region's footprint.
   - It counts a box, so it is honest rather than clever: an L-shaped pen will
     include the notch outside the fence, and a region that overhangs a wall
@@ -297,7 +397,7 @@ All notable changes to The Seraph's Ledger are documented here.
 - **Wolf and hyena pups were never auto-looted.** Auto-loot recognised a
   hostile by its spawn group, but cubs and pups are spawned by the multiply
   behaviour rather than by world or runtime spawning, so their entity types
-  carry no `spawnConditions` at all and the test found nothing to read —
+  carry no 'spawnConditions' at all and the test found nothing to read —
   their bodies just stayed where they fell while every adult vanished. The
   hostile groups are now collected once from the entity registry, so a pup
   is recognised by its family ("wolf", "bear", "hyena", "drifter") instead of
@@ -326,7 +426,7 @@ All notable changes to The Seraph's Ledger are documented here.
     removed outright, but an animal's is handed to the game's own dead-decay
     behaviour, so it leaves the carcass block it would have decayed into —
     the pile of bones you get after harvesting it by hand.
-  - The delay is configurable (`AutoLootDelaySeconds`, default 10, clamped
+  - The delay is configurable ('AutoLootDelaySeconds', default 10, clamped
     to 1–300) rather than the hostiles' fixed 2 seconds, because 2 seconds
     is not long enough to change your mind about a kill.
   - **Opening the carcass yourself wins.** If anyone has the carcass window
@@ -342,7 +442,7 @@ All notable changes to The Seraph's Ledger are documented here.
 - **Fast enemy despawn destroyed the loot of any hostile that died without a
   killer.** The 2-second cleanup generated the harvest drops, spat them on the
   ground and removed the body. But generating those drops needs the player who
-  landed the kill (the loot is scaled by their `animalLootDropRate`), so when
+  landed the kill (the loot is scaled by their 'animalLootDropRate'), so when
   there was no such player — a wolf that fell, drowned, burned or lost a fight
   with another predator — that step was skipped while the body was removed
   anyway, taking every hide, scrap of meat and lump of fat with it. The same
@@ -355,7 +455,7 @@ All notable changes to The Seraph's Ledger are documented here.
 ### Fixed
 - **Animal tally board** still called a closed pen open when hung on the
   outside face of a wall. The 1.19.2 retry stepped to the far side of the
-  wall by negating the board's `side` variant, but that variant already
+  wall by negating the board's 'side' variant, but that variant already
   points from the board into the wall it hangs on, so the second walk
   started two blocks further out on the same side and escaped exactly like
   the first. It now steps toward the wall, and through walls up to two
@@ -461,7 +561,7 @@ All notable changes to The Seraph's Ledger are documented here.
 
 ### Added
 - **Material swatch tool** — try a different material on a build before
-  committing to it. `/sw mark` two opposite corners, look over the highlighted
+  committing to it. '/sw mark' two opposite corners, look over the highlighted
   area, then **Ctrl+Shift+M**: the left list holds the materials found in the
   selection, the right list what each can become and how many blocks would
   change. Apply, and Undo if you don't like it (last 25 swaps per player).
@@ -479,8 +579,8 @@ All notable changes to The Seraph's Ledger are documented here.
   - Chiselled blocks are re-materialed in place, keeping their carving — and
     are the one place raw stone still counts, since somebody carved it. Blocks
     holding contents or state (chests, doors) are left alone and reported.
-  - Also driveable from chat: `/sw list`, `/sw options [material]`,
-    `/sw swap <from> <to>`, `/sw undo`, `/sw unmark`. Needs the `controlserver`
+  - Also driveable from chat: '/sw list', '/sw options [material]',
+    '/sw swap <from> <to>', '/sw undo', '/sw unmark'. Needs the 'controlserver'
     privilege.
   - Available on its own as the standalone **Swatch** mod; install it alongside
     this one and it takes over the feature, the same way Ice Cellar does.
@@ -489,8 +589,8 @@ All notable changes to The Seraph's Ledger are documented here.
 
 ### Fixed
 - **The ice-cellar hand-off in 1.15.1 never actually triggered.** It looked for
-  the standalone mod under the id `icecellar`, but that id was already taken on
-  the ModDB, so Ice Cellar had to register as **`icecooledcellars`**. The check
+  the standalone mod under the id 'icecellar', but that id was already taken on
+  the ModDB, so Ice Cellar had to register as **'icecooledcellars'**. The check
   keys off the modid, so it silently never matched: running 1.15.1 together
   with the released Ice Cellar meant both mods patched the perish rate and
   chilled the cellar twice — roughly halving spoilage twice over, with nothing
@@ -504,7 +604,7 @@ All notable changes to The Seraph's Ledger are documented here.
   of the bundle; it stays in Seraph's Ledger unchanged for everyone else. Both
   mods patch the same vanilla methods, so with the standalone installed this
   mod leaves the feature to it (logged at startup) rather than chilling cellars
-  twice. Ice Cellar picks up any values you tuned in `features.json` on its
+  twice. Ice Cellar picks up any values you tuned in 'features.json' on its
   first run.
   - Superseded by 1.15.2 — the check named the wrong modid and never fired.
 
@@ -516,7 +616,7 @@ All notable changes to The Seraph's Ledger are documented here.
   the outdoor climate and flooding the room with water sources — so shipping
   it off would silently cost updating players their stocked cellars. Anyone
   who prefers vanilla behavior can switch it off in the in-game settings
-  (Ctrl+Shift+L or `.slconfig`).
+  (Ctrl+Shift+L or '.slconfig').
 
 ## 1.14.1 — 2026-08-02
 
@@ -535,9 +635,9 @@ All notable changes to The Seraph's Ledger are documented here.
   insulated and doesn't melt at all.
 
 ### Changed
-- Default `IceCellarMinMeltChance` lowered 0.025 → 0.01: a fully chilled
+- Default 'IceCellarMinMeltChance' lowered 0.025 → 0.01: a fully chilled
   cellar now loses about one ice block per ~17 hours of real play time
-  (was ~7). If your `features.json` already stores the old 0.025, lower it by
+  (was ~7). If your 'features.json' already stores the old 0.025, lower it by
   hand or delete the line to pick up the new default.
 
 ## 1.14.0 — 2026-08-02
@@ -549,7 +649,7 @@ All notable changes to The Seraph's Ledger are documented here.
   in a proper cellar melts based on the ice-chilled room temperature instead:
   the more ice you stock, the colder the room and the slower each block melts.
   A fully iced cellar loses roughly one block per ~7 hours of real play time
-  (tunable via `IceCellarMinMeltChance`; set it to 0 to make fully-chilled ice
+  (tunable via 'IceCellarMinMeltChance'; set it to 0 to make fully-chilled ice
   last forever), and the loss accelerates as the stock dwindles and the cellar
   warms. Ice melting in any fully enclosed room vanishes instead of turning
   into a water source, so cellars no longer flood. Winter already prevented
@@ -566,8 +666,8 @@ All notable changes to The Seraph's Ledger are documented here.
   (winter cold passes through untouched), and stays within the game's own
   perish-rate floor, so nothing "freezes". Container tooltips show the ice
   count and chill strength; the perish-speed multiplier reflects it too.
-  Thresholds and target temperature are tunable in `features.json`
-  (`IceCellarMinBlocks`, `IceCellarFullBlocks`, `IceCellarTemp`).
+  Thresholds and target temperature are tunable in 'features.json'
+  ('IceCellarMinBlocks', 'IceCellarFullBlocks', 'IceCellarTemp').
 - **Ice now counts as a cooling cellar-wall material.** Vanilla treats ice
   walls as non-cooling (like wood), which would have penalized the room's
   cellar rating for every ice block placed; with this fix ice walls rate like
@@ -591,7 +691,7 @@ All notable changes to The Seraph's Ledger are documented here.
 ### Migration
 - Install **Hollowstone** together with this update, **before the first world
   load** — Hollowstone ships a remap config that converts already-placed
-  `seraphsledger:hiddenlockbox-*` blocks and `seraphsledger:secretspage` items
+  'seraphsledger:hiddenlockbox-*' blocks and 'seraphsledger:secretspage' items
   to its own domain, and the remap only applies cleanly when it's present on
   that first load. Hollowstone also adopts the lockbox registry (owners and
   stone-press combinations) from the old savegame data automatically. Page
@@ -654,10 +754,10 @@ All notable changes to The Seraph's Ledger are documented here.
 
 ### Fixed
 - **Page of Secrets** could not be crafted. The ink and quill was marked as a
-  tool ingredient (`isTool`), but the crafting matcher requires a tool to have
+  tool ingredient ('isTool'), but the crafting matcher requires a tool to have
   enough durability to pay the tool cost — and ink and quill has no durability
   at all, so the recipe never matched. It is now a non-consumed ingredient
-  (`consume: false`): the ink and quill still survives crafting, unchanged.
+  ('consume: false'): the ink and quill still survives crafting, unchanged.
 - **Hidden Lockbox** recipe logged "Output hiddenlockbox-coral cannot be
   resolved" on load when another mod adds extra cobblestone variants. The
   cobblestone ingredient is now pinned to the 20 vanilla rock types the lockbox
@@ -668,15 +768,15 @@ All notable changes to The Seraph's Ledger are documented here.
 ### Fixed
 - **Hidden Lockbox** rendered with granite cobblestone textures no matter which
   rock it was crafted from. The blocktype now declares its texture under the
-  plain `all` key (the type-prefixed key never resolved and the engine silently
+  plain 'all' key (the type-prefixed key never resolved and the engine silently
   fell back to the shape's default), and the inventory icon is cached per rock
-  (`variantByGroupInventory`), so the placed block, held item, and creative
+  ('variantByGroupInventory'), so the placed block, held item, and creative
   entries all show the correct stone.
 - **Stone-slide sound** is now the real AI-generated stone-on-stone recording
   (mono OGG, sped up 1.25×) instead of the vanilla placeholder — the 1.9.0
   placeholder note below no longer applies.
 - Deploy script now names the zip with the mod version (e.g.
-  `SeraphsLedger_1.9.1.zip`) and clears older versions from the Mods folder.
+  'SeraphsLedger_1.9.1.zip') and clears older versions from the Mods folder.
 
 ## 1.9.0
 
@@ -698,7 +798,7 @@ All notable changes to The Seraph's Ledger are documented here.
 
 ### Notes
 - The open/close sound ships as a placeholder (a vanilla stone sound). Replace
-  `assets/seraphsledger/sounds/block/stoneslide.ogg` with a custom
+  'assets/seraphsledger/sounds/block/stoneslide.ogg' with a custom
   stone-sliding-on-stone sound to taste.
 
 ## 1.8.1
@@ -707,32 +807,32 @@ All notable changes to The Seraph's Ledger are documented here.
 - **Large Chest** can now be crafted. Its recipe was two normal chests (shapeless,
   2×1), which is identical to vanilla's "2 chests → Trunk" recipe, so the grid always
   resolved to a Trunk instead. The recipe now requires two chests plus a metal nail
-  strip (`CNC`), making it unambiguous. Large Trunk and Large Labeled Chest were
+  strip ('CNC'), making it unambiguous. Large Trunk and Large Labeled Chest were
   unaffected because their inputs don't collide with any vanilla recipe. Note: only
-  chests carrying the `normal-generic` type attribute (crafted, or broken and picked
+  chests carrying the 'normal-generic' type attribute (crafted, or broken and picked
   up) qualify — very old chests from earlier mod versions may lack it and won't craft.
 
 ## 1.8.0
 
 ### Added
 - **Large containers** and **silenced voices** are now toggleable from the in-game
-  settings panel (Ctrl+Shift+L / `.slconfig`), alongside the existing runtime
+  settings panel (Ctrl+Shift+L / '.slconfig'), alongside the existing runtime
   features. Like the others, changes take effect after a restart.
 
 ### Changed
 - **Silenced voices** is now enforced by a client-side Harmony patch that
-  suppresses voice playback in `EntityTalkUtil` rather than by overriding the
-  voice sounds with silent `.ogg` files. This makes it switchable at runtime and
+  suppresses voice playback in 'EntityTalkUtil' rather than by overriding the
+  voice sounds with silent '.ogg' files. This makes it switchable at runtime and
   covers every entity voice regardless of which instrument it uses. The silent
-  `.ogg` override assets were removed.
+  '.ogg' override assets were removed.
 - The settings panel no longer carries the "these features are baked in and can't
   be switched off" note — every feature is now toggleable.
 
 ### Fixed
 - Disabling **large containers** now actually blocks crafting. The recipes are
-  disabled (`GridRecipe.Enabled = false`) in `AssetsFinalize` after every mod's
-  recipes are registered. Removing them from `World.GridRecipes` was ineffective
+  disabled ('GridRecipe.Enabled = false') in 'AssetsFinalize' after every mod's
+  recipes are registered. Removing them from 'World.GridRecipes' was ineffective
   because the crafting matcher searches a precomputed ingredient index rather than
-  that list; the index honors each recipe's live `Enabled` flag. Blocks stay
+  that list; the index honors each recipe's live 'Enabled' flag. Blocks stay
   registered, so large containers already placed in a world keep working — only
   crafting new ones is gated.

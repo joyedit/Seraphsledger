@@ -77,6 +77,49 @@ namespace SeraphsLedger
         public bool ContainerRescue = true;
         public bool SilencedVoices = true;
 
+        // Bigger fuel stacks, for firepits that can be loaded for longer. A
+        // firepit has no fuel limit of its own - the cap is the fuel's own
+        // stack size, and vanilla is uneven about it: charcoal, coal and coke
+        // stack to 64 while firewood, aged firewood and peat bricks stop at
+        // 32. On, the short ones are levelled up: a wood or peat load burns
+        // ~26 minutes instead of ~13.
+        //
+        // It is a change to the item, not to the firepit, so these stack the
+        // same way everywhere - in your bags, in a chest, in a crate. Piles on
+        // the ground are unaffected: a firewood or peat pile's size comes from
+        // the GroundStorable behaviour's own stackingCapacity, still 32.
+        //
+        // In multiplayer the server's setting is the one that applies: it
+        // sends its block and item definitions, stack size included, to every
+        // client on connect.
+        public bool BiggerFuelStacks = true;
+
+        // How big. Nothing is ever lowered, so 64 lifts the fuels that sit
+        // below it and leaves the rest at vanilla; 128 takes the whole list
+        // there. Clamped to 32..999.
+        public int FuelStackSize = 64;
+
+        // Which codes count as fuel, matched on the first part of the code, so
+        // every variant follows (coal-contaminated with coal) in any domain (a
+        // modded firewood with the vanilla one). A listed code still has to
+        // have a burn temperature to be touched, so a name collision with some
+        // other mod's item can't be caught up in it.
+        //
+        // Everything here is something you would feed a firepit. It is a list
+        // and not "everything that burns" on purpose: 197 vanilla assets have
+        // a burn temperature, among them beds, barrels, baskets, armour
+        // stands, candles, mannequins, waterwheels, windmill rotors and every
+        // wooden gear, which stack to 1, 4 or 16 by design.
+        //
+        // Add to it freely. 'log' (16) and 'planks' (32) are the two obvious
+        // ones left out - both are burnable, but they are building stock
+        // first, and quadrupling what a trip can carry is a bigger change than
+        // fuel.
+        public string[] FuelStackCodes =
+        {
+            "firewood", "agedfirewood", "peatbrick", "charcoal", "coal", "coke",
+        };
+
         // Auto-loot for the rest of the animals: deer, sheep, pigs, hares and
         // anything else that isn't in the "hostile" spawn group, which is all
         // EnemyFastDespawn above ever touches.
@@ -111,8 +154,10 @@ namespace SeraphsLedger
         // seconds. Longer than the hostiles' fixed 2s on purpose: 2 seconds is
         // not enough time to change your mind about a kill, and the delay is
         // also the window in which you can still open the carcass yourself (see
-        // below). Clamped to 1..300.
-        public int AutoLootDelaySeconds = 10;
+        // below). 7s reads as prompt while still leaving that window open; it
+        // was 10s through 1.28.1, which felt like standing around. Clamped to
+        // 1..300.
+        public int AutoLootDelaySeconds = 7;
 
         // Ice-cooled cellars: enabled by default deliberately - turning it off
         // reverts cellar ice to vanilla behavior (melts by outdoor climate and
@@ -146,6 +191,21 @@ namespace SeraphsLedger
         // henbox eggs and loose eggs inside the fence it hangs within. Off
         // disables the recipe and stops placed boards from scanning.
         public bool AnimalTally = true;
+
+        // Floating markers over the animals a tally board counts as ready to
+        // milk, shown while you are standing inside what that board counts.
+        //
+        // A milk-white plume over each one, not an outline around it: the
+        // engine has no way to outline an entity (block highlights are the
+        // only shaded highlight it offers), and faking one means re-rendering
+        // the animal's mesh through a render patch, which breaks on engine
+        // updates for the sake of a cosmetic.
+        //
+        // Off by default - it draws particles in your pen whenever you walk
+        // into it, which is a thing to opt into rather than to discover. The
+        // board's own "Ready to milk" count is part of the board and is not
+        // affected by this.
+        public bool AnimalTallyMilkMarkers = false;
 
         // Material swatch tool: /sw mark two corners, then Ctrl+Shift+M to swap
         // one building material for another across the selection, with undo.

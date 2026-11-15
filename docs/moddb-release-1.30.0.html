@@ -1,0 +1,38 @@
+<!-- Changelog for the ModDB release form (1.30.0). 1.28.0 is the last published
+     release, so this covers 1.28.1, 1.28.2, 1.29.0, 1.29.1 and 1.30.0 together. -->
+<p><strong>New in 1.30.0</strong></p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>The tally board counts the animals ready to milk.</strong> A new line, 'Ready to milk: 3', with the per-species breakdown under it. Ready means what the game means by it: lactating, and not milked in the last day. Stress is deliberately left out &mdash; it lapses on its own after a minute, and counting it would make the number flicker while a herd settles. The board answers what you could go and milk today; the game still has the final say at the moment you try.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Floating markers over the ready animals, off by default.</strong> Stand inside what a board counts and each ready animal wears a small milk-white plume. Milk one and its marker goes at once rather than at the next scan. Walk out of the pen and they fade on their own. Switch them on with <strong>Milk-ready markers</strong> in Ctrl+Shift+L; the tally board itself has to be on, and in multiplayer the server and the client both have to want them.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Why a plume and not a glowing outline.</strong> Vintage Story offers shaded highlights for blocks and for nothing else. A real silhouette round an animal means re-rendering its mesh through a render patch, which breaks on engine updates, and a cosmetic is a poor thing to keep repairing. The plume does the same job and survives.</p>
+</li>
+</ul>
+<p><strong>New in 1.29.0 &ndash; 1.29.1</strong></p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Bigger fuel stacks, so a firepit can be loaded for longer.</strong> Firewood, aged firewood and peat bricks now stack to 64 instead of 32, which is what charcoal, coal and coke have always stacked to. A full wood load burns about 26 minutes instead of 13. A firepit never had a fuel limit of its own &mdash; what capped a load was the fuel's own stack size, so this raises it everywhere: bags, chests, crates. Firewood piles on the ground are unchanged.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>The fuel list is yours.</strong> 'FuelStackCodes' in features.json decides what counts, matched on the first part of the code, so every variant follows in any domain and a modded firewood is raised alongside the vanilla one. A listed code still has to actually burn before anything is changed. 'FuelStackSize' accepts 32 to 999. Only fuels below the configured size are touched, so the default of 64 leaves charcoal, coal and coke at vanilla.</p>
+</li>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;">In multiplayer the server's setting is the one that applies: it sends its block and item definitions, stack size included, to every client on connect. Toggle: <strong>Bigger fuel stacks</strong> in Ctrl+Shift+L. On by default.</p>
+</li>
+</ul>
+<p><strong>Changed in 1.28.2</strong></p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>Auto-loot of animals is quicker.</strong> A deer, sheep or pig you kill is butchered 7 seconds after death instead of 10 &mdash; about 30% off a wait that was long enough to stand around for. The window is still there to change your mind and open the carcass by hand first. An existing features.json keeps the delay it already has; set 'AutoLootDelaySeconds' to 7 there, or delete the line, to pick up the new default. Hostiles are unchanged at their fixed 2 seconds.</p>
+</li>
+</ul>
+<p><strong>Fixed in 1.28.1</strong></p>
+<ul>
+<li>
+<p style="line-height: 0.19in; margin-bottom: 0.06in;"><strong>The scrollbar lines up with the list frame.</strong> In the mod list browser and the trader ledger the bar stopped three pixels short of the frame at the top and at the bottom &mdash; plain to see at the bottom-right corner. Both bars are now sized from the frame itself, so they meet its corners.</p>
+</li>
+</ul>

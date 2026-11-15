@@ -68,7 +68,8 @@ namespace SeraphsLedger
                 .RegisterMessageType<TrashCursorPacket>()
                 .RegisterMessageType<SortVesselPacket>()
                 .RegisterMessageType<ShowTallyRegionPacket>()
-                .RegisterMessageType<SweepCratePacket>();
+                .RegisterMessageType<SweepCratePacket>()
+                .RegisterMessageType<MilkMarkerPacket>();
 
             // Ice-cooled cellars run on both sides: the server applies the
             // reduced perish rate to stored food, the client shows it in the
@@ -88,6 +89,10 @@ namespace SeraphsLedger
             api.RegisterBlockClass("SeraphsLedgerTallyBoard", typeof(BlockTallyBoard));
             api.RegisterBlockEntityClass("SeraphsLedgerTallyBoard", typeof(BlockEntityTallyBoard));
             BlockEntityTallyBoard.ScanEnabled = cfg.AnimalTally;
+            // Server-side gate for the marker packets; the client gate is in
+            // StartClientSide. Both ends have to want them: a server with the
+            // feature off sends nothing, a client with it off draws nothing.
+            BlockEntityTallyBoard.MilkMarkersEnabled = cfg.AnimalTally && cfg.AnimalTallyMilkMarkers;
 
             if (cfg.IceCooledCellars && api.ModLoader.IsModEnabled("icecooledcellars"))
             {
@@ -207,6 +212,12 @@ namespace SeraphsLedger
             base.AssetsFinalize(api);
 
             var cfg = SeraphsLedgerConfig.Load(api);
+
+            // Fuel stack sizes are set on the item, so this waits until every
+            // mod's item definitions are registered - and runs on both sides,
+            // which each hold their own item registry. See FuelStacks.
+            FuelStacks.Apply(api, cfg);
+
             if (cfg.LargeContainers && cfg.AnimalTally) return;
 
             var recipes = api.World?.GridRecipes;
@@ -246,6 +257,14 @@ namespace SeraphsLedger
                 .HandleWith(_ => { ToggleConfigGui(); return TextCommandResult.Success(); });
 
             var cfg = SeraphsLedgerConfig.Load(api);
+
+            // Milk-ready markers over the animals a tally board counted. The
+            // handler is set either way so the channel stays symmetric; the
+            // drawing is what the toggle gates.
+            MilkMarkers.Enabled = cfg.AnimalTally && cfg.AnimalTallyMilkMarkers;
+            api.Network.GetChannel(NetworkChannelName)
+                .SetMessageHandler<MilkMarkerPacket>(MilkMarkers.OnPacket);
+            if (MilkMarkers.Enabled) MilkMarkers.Init(api);
 
             // Move-all / move-matching. The move-matching binding is a real
             // hotkey so the player can rebind it under Controls > Inventory
@@ -542,6 +561,7 @@ namespace SeraphsLedger
             ClientChannel = null;
             MoveAll.Shutdown();
             CrateSweep.Shutdown();
+            MilkMarkers.Dispose();
             configDialog = null;
             containerLedger?.Dispose();
             containerLedger = null;
