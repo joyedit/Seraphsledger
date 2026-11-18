@@ -2,3 +2,6 @@ bin/
 obj/
 *.user
 Releases/
+
+# Player reply drafts - local working notes, never published.
+docs/replies/
